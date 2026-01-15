@@ -6,22 +6,29 @@ import { useAuthStore } from './store/Authstore.ts'
 import LandingPage from './pages/Landingpage.tsx'
 import SignupPage from './pages/Signuppage.tsx'
 import { Route, Routes,Navigate, Router } from 'react-router-dom'
+import HomePage from './pages/Homepage.tsx'
+import LoginPage from './pages/Loginpage.tsx'
 
 
 function App() {
 
-  const {Authuser} = useAuthStore();
+  const {Authuser, checkAuth} = useAuthStore();
 
   useEffect(()=>{
-    console.log(Authuser);
+    checkAuth();
   },[])
 
   return (
     <div>
       
         <Routes>
-          <Route path = "/" element={Authuser ? <LandingPage /> : <Navigate to="/signup" />} />
-          <Route path = "/signup" element={<SignupPage />} />
+              {/* Public routes (only for logged-out users) */}
+              <Route path="/" element={!Authuser ? <LandingPage /> : <Navigate to="/home" />} />
+              <Route path="/login" element={!Authuser ? <LoginPage /> : <Navigate to="/home" />} />
+              <Route path="/signup" element={!Authuser ? <SignupPage /> : <Navigate to="/home" />} />
+        
+              <Route path="/home" element={Authuser ? <HomePage /> : <Navigate to="/" />} />
+        
         </Routes> 
 
     </div>

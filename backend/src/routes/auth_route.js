@@ -3,7 +3,8 @@ import mongoose from 'mongoose';
 import User from '../models/user_model.js';
 import bcrypt from 'bcryptjs';
 import { generateToken } from '../utils/token.js';
-import { signup, login } from '../controllers/auth_controller.js';
+import { signup, login, checkAuth } from '../controllers/auth_controller.js';
+import { protect } from '../middlewares/protect.js';
 
 
 const router = express.Router();
@@ -11,6 +12,8 @@ const router = express.Router();
 router.post(('/signup'), signup);
 
 router.post(('/login'), login);
+
+router.get('/check-auth', protect, checkAuth);
 
 
 export default router;

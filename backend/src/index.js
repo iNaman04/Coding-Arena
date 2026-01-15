@@ -4,15 +4,22 @@ import bodyParser from 'body-parser';
 import connectDB from './db.js';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth_route.js';
+import cookieParser from 'cookie-parser';
 
 dotenv.config({ path: "../.env" });  // it is for handling .env file 
 
 const app = express();
 
+app.use(cors({
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
-app.use(cors());
+
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());  
 
 app.use('/api/auth', authRoutes);
 

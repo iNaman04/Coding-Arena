@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
-import { Code, Mail, Lock, User, Eye, EyeOff, Github, Chrome } from 'lucide-react';
-import { useAuthStore } from '../store/Authstore.ts';
+import { Code, Mail, Lock, Eye, EyeOff, Github, Chrome } from 'lucide-react';
 
-const SignupPage: React.FC = () => {
-  
-  const {signup, Authuser} = useAuthStore();
-
+const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
     email: '',
     password: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -25,12 +21,6 @@ const SignupPage: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
-    }
-    
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -39,26 +29,22 @@ const SignupPage: React.FC = () => {
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (validateForm()) {
-      console.log('Form submitted:', formData);
-      signup(formData);
-        
+      console.log('Login submitted:', formData, 'Remember me:', rememberMe);
+      // Handle login logic here
     }
   };
 
-  const handleSocialSignup = (provider: string) => {
-    console.log(`Signing up with ${provider}`);
-    // Handle social signup logic here
+  const handleSocialLogin = (provider: string) => {
+    console.log(`Logging in with ${provider}`);
+    // Handle social login logic here
   };
 
   return (
@@ -83,22 +69,22 @@ const SignupPage: React.FC = () => {
           </div>
           
           <h1 className="text-5xl font-bold leading-tight">
-            Join the Ultimate
+            Welcome Back,
             <span className="block bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Coding Arena
+              Champion
             </span>
           </h1>
           
           <p className="text-gray-300 text-lg leading-relaxed">
-            Compete with developers worldwide, sharpen your skills, and climb the leaderboard. Your coding journey starts here.
+            Log in to continue your coding journey. Your next challenge awaits, and the leaderboard is waiting for your name at the top.
           </p>
 
           <div className="space-y-4 pt-4">
             {[
-              'Real-time competitive coding',
-              'Track your progress and rankings',
-              'Challenge friends and rivals',
-              'Learn from the best coders'
+              'Resume ongoing battles',
+              'Check your rankings',
+              'Challenge new opponents',
+              'Improve your skills'
             ].map((feature, idx) => (
               <div key={idx} className="flex items-center space-x-3">
                 <div className="bg-purple-500/20 p-1 rounded">
@@ -110,24 +96,24 @@ const SignupPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right side - Signup Form */}
+        {/* Right side - Login Form */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
           <div className="mb-8">
-            <h2 className="text-3xl font-bold mb-2">Create Account</h2>
-            <p className="text-gray-400">Start your competitive coding journey</p>
+            <h2 className="text-3xl font-bold mb-2">Log In</h2>
+            <p className="text-gray-400">Enter your credentials to continue</p>
           </div>
 
-          {/* Social Signup */}
+          {/* Social Login */}
           <div className="space-y-3 mb-6">
             <button
-              onClick={() => handleSocialSignup('Google')}
+              onClick={() => handleSocialLogin('Google')}
               className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg py-3 flex items-center justify-center space-x-3 transition group"
             >
               <Chrome className="w-5 h-5 group-hover:scale-110 transition" />
               <span>Continue with Google</span>
             </button>
             <button
-              onClick={() => handleSocialSignup('GitHub')}
+              onClick={() => handleSocialLogin('GitHub')}
               className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg py-3 flex items-center justify-center space-x-3 transition group"
             >
               <Github className="w-5 h-5 group-hover:scale-110 transition" />
@@ -141,27 +127,8 @@ const SignupPage: React.FC = () => {
             <div className="flex-1 h-px bg-white/20"></div>
           </div>
 
-          {/* Signup Form */}
-          <div className="space-y-4">
-            {/* Username */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Username</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className={`w-full bg-white/5 border ${errors.username ? 'border-red-500' : 'border-white/20'} rounded-lg py-3 pl-11 pr-4 focus:outline-none focus:border-purple-500 transition`}
-                  placeholder="Choose a username"
-                />
-              </div>
-              {errors.username && (
-                <p className="text-red-400 text-sm mt-1">{errors.username}</p>
-              )}
-            </div>
-
+          {/* Login Form */}
+          <div className="space-y-5">
             {/* Email */}
             <div>
               <label className="block text-sm font-medium mb-2">Email</label>
@@ -192,7 +159,7 @@ const SignupPage: React.FC = () => {
                   value={formData.password}
                   onChange={handleChange}
                   className={`w-full bg-white/5 border ${errors.password ? 'border-red-500' : 'border-white/20'} rounded-lg py-3 pl-11 pr-11 focus:outline-none focus:border-purple-500 transition`}
-                  placeholder="Create a strong password"
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"
@@ -207,23 +174,23 @@ const SignupPage: React.FC = () => {
               )}
             </div>
 
-            {/* Terms */}
-            <div className="flex items-start space-x-2 pt-2">
-              <input
-                type="checkbox"
-                id="terms"
-                className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 accent-purple-500"
-              />
-              <label htmlFor="terms" className="text-sm text-gray-400">
-                I agree to the{' '}
-                <a href="#" className="text-purple-400 hover:text-purple-300 transition">
-                  Terms of Service
-                </a>{' '}
-                and{' '}
-                <a href="#" className="text-purple-400 hover:text-purple-300 transition">
-                  Privacy Policy
-                </a>
-              </label>
+            {/* Remember me & Forgot password */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="remember"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/20 bg-white/5 accent-purple-500"
+                />
+                <label htmlFor="remember" className="text-sm text-gray-400">
+                  Remember me
+                </label>
+              </div>
+              <a href="#" className="text-sm text-purple-400 hover:text-purple-300 transition">
+                Forgot password?
+              </a>
             </div>
 
             {/* Submit Button */}
@@ -231,15 +198,15 @@ const SignupPage: React.FC = () => {
               onClick={handleSubmit}
               className="w-full bg-gradient-to-r from-purple-500 to-pink-500 py-3 rounded-lg font-bold text-lg hover:shadow-lg hover:shadow-purple-500/50 transition transform hover:scale-[1.02] mt-6"
             >
-              Create Account
+              Log In
             </button>
           </div>
 
-          {/* Login Link */}
+          {/* Signup Link */}
           <p className="text-center text-gray-400 mt-6">
-            Already have an account?{' '}
+            Don't have an account?{' '}
             <a href="#" className="text-purple-400 hover:text-purple-300 font-semibold transition">
-              Log in
+              Sign up
             </a>
           </p>
         </div>
@@ -248,4 +215,4 @@ const SignupPage: React.FC = () => {
   );
 };
 
-export default SignupPage;
+export default LoginPage;

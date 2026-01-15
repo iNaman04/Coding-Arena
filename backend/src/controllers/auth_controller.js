@@ -6,7 +6,7 @@ import { generateToken } from '../utils/token.js';
 
 export const signup = async (req, res) => {
      const { username, email, password } = req.body;
-     console.log(username, email, password);
+     
     try {
         if(!username || !email || !password){
             return res.status(400).json({ message: "All fields are required" });
@@ -24,7 +24,13 @@ export const signup = async (req, res) => {
         const newUser = new User({ username, email, password: hashedPasword });
         await newUser.save();
         const token = generateToken(newUser._id);
-        return res.status(200).json({ token, user : { id : newUser._id, username : newUser.username } });
+        res.cookie("token", token, {
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            sameSite: "strict",
+            secure: false
+        }); 
+        return res.status(200).json({ id : newUser._id, username : newUser.username } );
     } catch (error) {
         return res.status(500).json({ message: "Internal server error" });
     }
@@ -48,8 +54,22 @@ export const login = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
         const token = generateToken(user._id);
-        return res.status(200).json({ token, user : { id : user._id, username : user.username } });
+        res.cookie("token", token, {
+            httpOnly: true,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            sameSite: "strict",
+            secure: false
+        });
+        return res.status(200).json({ id : user._id, username : user.username } );
     } catch (error) {
         return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const checkAuth = async (req, res) => {
+    try {
+        res.status(200).json(req.user);
+    } catch (error) {
+        return res.status(500).json({ message: "checkAuth failed" });
     }
 }
