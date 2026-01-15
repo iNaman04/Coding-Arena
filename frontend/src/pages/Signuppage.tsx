@@ -3,10 +3,8 @@ import { Code, Mail, Lock, User, Eye, EyeOff, Github, Chrome } from 'lucide-reac
 import { useAuthStore } from '../store/Authstore.ts';
 
 const SignupPage: React.FC = () => {
-  
-  const {signup, Authuser} = useAuthStore();
-
   const [showPassword, setShowPassword] = useState(false);
+  const { signup } = useAuthStore();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -52,7 +50,6 @@ const SignupPage: React.FC = () => {
     if (validateForm()) {
       console.log('Form submitted:', formData);
       signup(formData);
-        
     }
   };
 
@@ -62,7 +59,7 @@ const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="fixed inset-0 w-screen h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center p-4 overflow-y-auto">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
