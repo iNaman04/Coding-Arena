@@ -1,7 +1,12 @@
     import React, { useState } from 'react';
     import { Code, Mail, Lock, Eye, EyeOff, Github, Chrome } from 'lucide-react';
+    import { useAuthStore } from '../store/Authstore.ts';
 
     const LoginPage: React.FC = () => {
+    
+    const { login } = useAuthStore();
+    
+    
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
@@ -38,7 +43,7 @@
     const handleSubmit = () => {
         if (validateForm()) {
         console.log('Login submitted:', formData, 'Remember me:', rememberMe);
-        // Handle login logic here
+        login(formData);
         }
     };
 

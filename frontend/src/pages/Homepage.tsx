@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Code, Plus, Users, Zap, Trophy, Copy, Check, LogOut, User } from 'lucide-react';
+import { useAuthStore } from '../store/Authstore.ts';
 
 const HomePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
+  
+   const { logout } = useAuthStore();
+    const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
   const [sessionCode, setSessionCode] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
@@ -32,6 +35,10 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const clearUser = () => {
+    logout();
+  }
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white fixed inset-0 overflow-y-auto">
       {/* Animated background */}
@@ -59,7 +66,7 @@ const HomePage: React.FC = () => {
             <User className="w-5 h-5" />
             <span className="hidden sm:inline">Profile</span>
           </button>
-          <button className="text-gray-400 hover:text-white transition">
+          <button onClick={()=>{clearUser()}} className="text-gray-400 hover:text-white transition">
             <LogOut className="w-5 h-5" />
           </button>
         </div>

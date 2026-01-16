@@ -73,3 +73,12 @@ export const checkAuth = async (req, res) => {
         return res.status(500).json({ message: "checkAuth failed" });
     }
 }
+
+export const logout = async (req, res) => {
+    res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "strict",
+    secure: true,
+    });
+    res.status(200).json({ message: "Logged out successfully" });
+}

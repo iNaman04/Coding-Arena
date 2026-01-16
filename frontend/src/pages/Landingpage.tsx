@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Code, Zap, Trophy, Users, Clock, TrendingUp } from 'lucide-react';
+import SignupPage from './Signuppage.tsx';
+import { Navigate, useNavigate } from 'react-router';
 
 const LandingPage: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setIsVisible(true);
@@ -61,7 +64,7 @@ const LandingPage: React.FC = () => {
           <a href="#" className="hover:text-purple-400 transition">How it Works</a>
           <a href="#" className="hover:text-purple-400 transition">Pricing</a>
         </div>
-        <button className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-2 rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition transform hover:scale-105">
+        <button onClick={() => navigate('/signup')} className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-2 rounded-lg font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition transform hover:scale-105">
           Get Started
         </button>
       </nav>
