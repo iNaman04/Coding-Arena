@@ -5,6 +5,7 @@ import connectDB from './db.js';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth_route.js';
 import cookieParser from 'cookie-parser';
+import sessionRoutes from './routes/session_route.js';
 
 dotenv.config({ path: "../.env" });  // it is for handling .env file 
 
@@ -22,6 +23,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());  
 
 app.use('/api/auth', authRoutes);
+app.use('/api/sessions', sessionRoutes);
 
 connectDB().then(() => {
   console.log("Database connected successfully");

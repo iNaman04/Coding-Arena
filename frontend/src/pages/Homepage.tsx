@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Code, Plus, Users, Zap, Trophy, Copy, Check, LogOut, User } from 'lucide-react';
 import { useAuthStore } from '../store/Authstore.ts';
+import { useSessionstore } from '../store/Sessionstore.ts';
 
 const HomePage: React.FC = () => {
   
    const { logout } = useAuthStore();
-    const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
+   const { createSession } = useSessionstore();
+const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
   const [sessionCode, setSessionCode] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
@@ -25,7 +27,7 @@ const HomePage: React.FC = () => {
   };
 
   const handleCreateSession = () => {
-    generateSessionCode();
+        createSession();
   };
 
   const handleJoinSession = () => {
