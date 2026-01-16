@@ -62,9 +62,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error("Error during logout:", error);
     }
   }
-
-
-
+  
 
 
 }));

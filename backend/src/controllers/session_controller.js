@@ -18,7 +18,8 @@ export const createSession = async (req, res) => {
         const session = await Session.create({
             inviteCode,
             createdBy: user._id,
-            players: [user._id]
+            players: [user._id],
+            difficulty: req.body.difficulty,
         })
 
 
