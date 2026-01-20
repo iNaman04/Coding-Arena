@@ -10,6 +10,7 @@ import HomePage from './pages/Homepage.tsx'
 import LoginPage from './pages/Loginpage.tsx'
 import { socket } from './libs/sockets.ts'
 import { useNavigate } from 'react-router-dom';
+import Battlepage from './pages/Battlepage.tsx'
 
 function App() {
 
