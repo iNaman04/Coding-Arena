@@ -13,7 +13,7 @@ export const initSocket = (server) => {
     io.on("connection", (socket) => {
         console.log("Socket connected:", socket.id);
 
-        socket.on("join-room", (sessionId) => {
+        socket.on("join-session-room", (sessionId) => {
             socket.join(sessionId);
             console.log(`Socket ${socket.id} joined room ${sessionId}`);
         });

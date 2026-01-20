@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import axiosInstance from "../libs/axios.ts";
+import {socket} from "../libs/sockets.ts";
 
 
 interface JoinSessionResponse {
@@ -25,6 +26,7 @@ export const useSessionstore = create<SessionState>((set) => ({
     createSession: async (difficulty) => {
         try {
             const response = await axiosInstance.post("/sessions/create", { difficulty });
+            socket.emit("join-session-room", response.data.sessionId);    
             set({ sessionCode: response.data.inviteCode });
             console.log("Session created with code:", response.data.inviteCode);
 
@@ -37,6 +39,7 @@ export const useSessionstore = create<SessionState>((set) => ({
     joinSession: async (code) => {
         try {
             const response = await axiosInstance.post("/sessions/join", { inviteCode: code });
+            socket.emit("join-session-room", response.data.sessionId);
             set({
                 sessionCode: response.data.inviteCode,
                 sessionId: response.data.sessionId,

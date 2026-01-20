@@ -76,6 +76,9 @@ export const joinSesson = async (req, res) => {
         }
 
         await session.save();
+        req.io.to(session._id.toString()).emit("playerJoined", {
+            sessionId: session._id,
+        });
 
         res.status(200).json({
             message: "Successfully joined session",
