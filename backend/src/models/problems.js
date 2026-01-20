@@ -1,31 +1,22 @@
 import mongoose from "mongoose";
 
 const problemSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true
-  },
+  title: String,
+  slug: { type: String, unique: true },
   difficulty: {
     type: String,
-    enum: ["easy", "medium", "hard"],
-    required: true
+    enum: ["EASY", "MEDIUM", "HARD"]
   },
-  description: {
-    type: String,
-    required: true
-  },
+  description: String,
+  constraints: [String],
+
   examples: [
     {
       input: String,
-      output: String
+      output: String,
+      explanation: String
     }
   ],
-  constraints: [String],
-
-  starterCode: {
-    type: String,
-    required: true
-  },
 
   testCases: [
     {
@@ -35,4 +26,8 @@ const problemSchema = new mongoose.Schema({
   ]
 }, { timestamps: true });
 
-export default mongoose.model("Problem", problemSchema);
+
+const Problem = mongoose.model("Problem", problemSchema);
+
+
+export default Problem;
