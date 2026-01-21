@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth_route.js';
 import cookieParser from 'cookie-parser';
 import sessionRoutes from './routes/session_route.js';
-import {http} from 'http';
+import http from 'http';
 import { initSocket } from './utils/sockets.js';
 
 dotenv.config({ path: "../.env" });  // it is for handling .env file 

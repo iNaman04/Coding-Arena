@@ -11,6 +11,7 @@ import LoginPage from './pages/Loginpage.tsx'
 import { socket } from './libs/sockets.ts'
 import { useNavigate } from 'react-router-dom';
 import Battlepage from './pages/Battlepage.tsx'
+import { useSessionstore } from './store/Sessionstore.ts'
 
 function App() {
 
@@ -21,15 +22,22 @@ function App() {
   }, [])
 
   useEffect(() => {
-    socket.on("session-started", ({ sessionId }) => {
-      console.log("Session started:", sessionId);
+    if (!socket.connected) {
+      socket.connect();
+    }
+  }, []);
+  useEffect(() => {
+    const handleSessionStarted = ({ sessionId }: { sessionId: string }) => {
       navigate(`/battle/${sessionId}`);
-    });
+    };
+
+    socket.on("session-started", handleSessionStarted);
 
     return () => {
-      socket.off("session-started");
+      socket.off("session-started", handleSessionStarted);
     };
-  }, []);
+  }, [navigate]);
+
 
   return (
     <div>
@@ -41,6 +49,7 @@ function App() {
         <Route path="/signup" element={!Authuser ? <SignupPage /> : <Navigate to="/home" />} />
 
         <Route path="/home" element={Authuser ? <HomePage /> : <Navigate to="/" />} />
+        <Route path="/battle/:sessionId" element={Authuser ? <Battlepage /> : <Navigate to="/" />} />
 
       </Routes>
 
