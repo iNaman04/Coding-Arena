@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 interface AuthState {
   Authuser: any;
+  isCheckingAuth?: boolean;
   signup: (data: any) => Promise<void>;
   checkAuth: () => Promise<void>;
   login: (data: any) => Promise<void>;
@@ -16,6 +17,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   Authuser: null,
+  isCheckingAuth: true,
   
   signup : async(data)=>{
     try {
@@ -46,7 +48,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkAuth: async () => {
     try {
       const response = await axiosInstance.get("/auth/check-auth");
-      set({ Authuser: response.data });
+      set({ Authuser: response.data, isCheckingAuth : false });
+      
     } catch (error) {
       set({ Authuser: null });
     }

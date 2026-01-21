@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import axiosInstance from "../libs/axios.ts";
 import {socket} from "../libs/sockets.ts";
+import { AxiosError } from "axios";
 
 
 interface JoinSessionResponse {
@@ -16,6 +17,7 @@ interface SessionState {
     createSession: (difficulty: string) => Promise<void>;
     clearSession: () => void;
     joinSession: (code: string) => Promise<JoinSessionResponse>;
+    checkActiveSession : () => Promise<any>;
 
 }
 
@@ -55,4 +57,28 @@ export const useSessionstore = create<SessionState>((set) => ({
             throw error;
         }
 
-    }}));
+    },
+
+    checkActiveSession : async() =>{
+        try {
+            const response = await axiosInstance.get("/sessions/active-session");
+            if(response.data.sessionId){
+                console.log("this is session Id", response.data.sessionId);
+                
+                set({
+                    sessionId : response.data.sessionId,
+                    sessionCode : response.data.inviteCode,
+                    status : response.data.status
+                })
+                return response.data.sessionId;
+            }
+        } catch (error : any) {
+            if(error.response?.status === 404){
+                return 
+            }
+            console.log(error);
+            
+        }
+    }
+
+}));

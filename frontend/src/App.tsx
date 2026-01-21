@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -12,14 +12,18 @@ import { socket } from './libs/sockets.ts'
 import { useNavigate } from 'react-router-dom';
 import Battlepage from './pages/Battlepage.tsx'
 import { useSessionstore } from './store/Sessionstore.ts'
+import { Loader } from 'lucide-react'
 
 function App() {
 
-  const { Authuser, checkAuth } = useAuthStore();
+  const { Authuser, checkAuth, isCheckingAuth } = useAuthStore();
+  const { checkActiveSession } = useSessionstore();
   const navigate = useNavigate();
   useEffect(() => {
     checkAuth();
   }, [])
+
+  
 
   useEffect(() => {
     if (!socket.connected) {
@@ -37,6 +41,25 @@ function App() {
       socket.off("session-started", handleSessionStarted);
     };
   }, [navigate]);
+
+  useEffect(()=>{
+      const restoreSession = async()=>{
+        const response = await checkActiveSession();
+        if(response){
+          socket.emit("join-session-room", response.sessionId);
+          navigate(`/battle/${response.sessionId}`);
+        }
+      }
+      restoreSession();
+  })
+
+  if(isCheckingAuth){
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader className= "size-10 animate-spin" />
+      </div>
+    )
+  }
 
 
   return (

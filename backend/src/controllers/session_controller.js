@@ -93,3 +93,24 @@ export const joinSesson = async (req, res) => {
         
     }
 }
+
+export const getMyActiveSession = async (req, res) =>{
+    try {
+        const userId = req.user._id;
+        const session = await Session.findOne({
+            players: userId,
+            status: "ACTIVE"
+        })
+        if(!session){
+            return res.status(404).json({ message: "No active session found" });
+        }
+        res.status(200).json({
+            sessionId : session._id,
+            inviteCode : session.inviteCode,
+            status : session.status
+        })
+
+    } catch (error) {
+        res.status(500).json({ message: "Failed to get active session" });
+    }
+}
