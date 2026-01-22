@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ Authuser: response.data, isCheckingAuth : false });
       
     } catch (error) {
-      set({ Authuser: null });
+      set({ Authuser: null, isCheckingAuth : false });
     }
   }
   ,

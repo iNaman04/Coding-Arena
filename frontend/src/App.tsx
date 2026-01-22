@@ -19,6 +19,9 @@ function App() {
   const { Authuser, checkAuth, isCheckingAuth } = useAuthStore();
   const { checkActiveSession } = useSessionstore();
   const navigate = useNavigate();
+  
+  
+  
   useEffect(() => {
     checkAuth();
   }, [])
@@ -51,7 +54,7 @@ function App() {
         }
       }
       restoreSession();
-  })
+  },[])
 
   if(isCheckingAuth){
     return (

@@ -5,7 +5,7 @@ const sessionSchema = new mongoose.Schema({
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     players: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     status: { type: String, enum: ['WAITING', 'ACTIVE', 'COMPLETED'], default: 'WAITING' },
-    problemID: { type: mongoose.Schema.Types.ObjectId, ref: 'Problem', default: null },
+    problem: { type: mongoose.Schema.Types.ObjectId, ref: 'Problem', default: null },
 
     difficulty: {
         type: String,

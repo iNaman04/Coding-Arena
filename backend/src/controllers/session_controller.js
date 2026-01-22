@@ -2,6 +2,7 @@ import express from 'express';
 import Session from '../models/session.js';
 import { generateCode } from '../utils/code_generator.js';
 import { start } from 'repl';
+import Problem from '../models/problems.js';
 
 export const createSession = async (req, res) => {
     try {
@@ -72,8 +73,19 @@ export const joinSesson = async (req, res) => {
             session.status = "ACTIVE";
             session.startedAt = new Date();
 
-            // problem will be assigned here (next phase)
+            const problems = await Problem.find({
+                difficulty: session.difficulty.toUpperCase()
+            })
+
+            if(problems.length===0){
+                return res.status(500).json({ message: "No problems available for the selected difficulty" });
+            }
+
+            const randomproblem = problems[0];
+            session.problem = randomproblem._id;
         }
+
+        
 
         await session.save();
         req.io.to(session._id.toString()).emit("session-started", {
@@ -111,6 +123,6 @@ export const getMyActiveSession = async (req, res) =>{
         })
 
     } catch (error) {
-        res.status(500).json({ message: "Failed to get active session" });
+        res.status(404).json({ message: "Failed to get active session" });
     }
 }
