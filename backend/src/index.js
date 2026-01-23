@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import sessionRoutes from './routes/session_route.js';
 import http from 'http';
 import { initSocket } from './utils/sockets.js';
+import battleRoutes from './routes/battle_route.js';
 
 dotenv.config({ path: "../.env" });  // it is for handling .env file 
 
@@ -35,6 +36,7 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes);
+app.use('/api/battle', battleRoutes);
 
 
 connectDB().then(() => {
