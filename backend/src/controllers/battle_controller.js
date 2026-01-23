@@ -29,7 +29,7 @@ export const getBattleData = async (req, res) => {
                 title : session.problem.title,
                 description : session.problem.description,
                 difficulty : session.problem.difficulty,
-                example: session.problem.examples,
+                examples: session.problem.examples,
                 testCases : session.problem.testCases,
                 constraints : session.problem.constraints
             }
