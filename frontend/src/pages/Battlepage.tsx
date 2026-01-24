@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Code, Play, Send, Clock, User, Trophy, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
+import { Code, Play, Send, Clock, User, Trophy, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../libs/axios.ts';
-
+import Editor from '@monaco-editor/react';
 interface TestCase {
     input: string;
     output: string;
@@ -26,7 +26,7 @@ interface Question {
 const CodingBattlePage: React.FC = () => {
     const navigate = useNavigate();
     const sessionIdFromUrl = window.location.pathname.split("/").pop();
-    
+
     const [Problem, setProblem] = useState<Question | null>(null);
 
 
@@ -40,6 +40,15 @@ const CodingBattlePage: React.FC = () => {
     const [isRunning, setIsRunning] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+
+
+    const templates: Record<string, string> = {
+        javascript: `function solution(input) {\n\n}`,
+        python: `def solution(input):\n    pass`,
+        java: `class Solution {\n    public static void solution() {\n    }\n}`,
+        cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n}`
+    };
+
 
     // Mock question data - this will come from your API
     // const [question, setQuestion] = useState<Question>({
@@ -74,20 +83,20 @@ const CodingBattlePage: React.FC = () => {
     // Timer countdown
 
     useEffect(() => {
-        const fetchBattleData = async () =>{
+        const fetchBattleData = async () => {
             try {
-                const response = await axiosInstance.post(`/battle/${sessionIdFromUrl}`,{},{withCredentials: true});
+                const response = await axiosInstance.post(`/battle/${sessionIdFromUrl}`, {}, { withCredentials: true });
                 setProblem(response.data.problem);
 
-            } catch (error) {   
+            } catch (error) {
                 console.log(error);
             }
         }
         fetchBattleData();
-    },[sessionIdFromUrl])
-    
-    
-    
+    }, [sessionIdFromUrl])
+
+
+
     useEffect(() => {
         if (!sessionIdFromUrl) {
             navigate("/home");
@@ -184,8 +193,8 @@ const CodingBattlePage: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('description')}
                             className={`px-6 py-3 text-sm font-semibold transition ${activeTab === 'description'
-                                    ? 'text-white border-b-2 border-purple-500'
-                                    : 'text-gray-400 hover:text-white'
+                                ? 'text-white border-b-2 border-purple-500'
+                                : 'text-gray-400 hover:text-white'
                                 }`}
                         >
                             Description
@@ -193,8 +202,8 @@ const CodingBattlePage: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('submissions')}
                             className={`px-6 py-3 text-sm font-semibold transition ${activeTab === 'submissions'
-                                    ? 'text-white border-b-2 border-purple-500'
-                                    : 'text-gray-400 hover:text-white'
+                                ? 'text-white border-b-2 border-purple-500'
+                                : 'text-gray-400 hover:text-white'
                                 }`}
                         >
                             Submissions
@@ -270,7 +279,11 @@ const CodingBattlePage: React.FC = () => {
                         <div className="flex items-center space-x-2">
                             <select
                                 value={language}
-                                onChange={(e) => setLanguage(e.target.value)}
+                                onChange={(e) => {
+                                    const lang = e.target.value;
+                                    setLanguage(lang);
+                                    setCode(templates[lang]);
+                                }}
                                 className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-purple-500"
                             >
                                 <option value="javascript">JavaScript</option>
@@ -286,13 +299,14 @@ const CodingBattlePage: React.FC = () => {
 
                     {/* Code Editor */}
                     <div className="flex-1 overflow-hidden">
-                        <textarea
+                        <Editor
+                            height="100%"
+                            theme="vs-dark"
+                            language={language}
                             value={code}
-                            onChange={(e) => setCode(e.target.value)}
-                            className="w-full h-full bg-slate-900 text-gray-100 p-4 font-mono text-sm focus:outline-none resize-none"
-                            style={{ tabSize: 4 }}
-                            spellCheck={false}
+                            onChange={(value) => setCode(value || "")}
                         />
+
                     </div>
 
                     {/* Test Results Panel */}
@@ -339,7 +353,7 @@ const CodingBattlePage: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-3">
                             <button
-                               // onClick={handleRunCode}
+                                // onClick={handleRunCode}
                                 disabled={isRunning}
                                 className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
