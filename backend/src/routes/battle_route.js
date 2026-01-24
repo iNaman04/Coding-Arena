@@ -5,7 +5,7 @@ import { runCode } from "../controllers/battle_controller.js";
 
 const router = express.Router();
 
-router.post("/run-code", protect, runCode);
+router.post("/run-code", runCode);
 router.post("/:SessionId", protect, getBattleData);
 
-export default router;
+export default router;  

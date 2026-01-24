@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
+import { execSync } from 'child_process';
+import Problem from '../models/problems.js';
 
 
 export const getBattleData = async (req, res) => {
@@ -47,32 +49,57 @@ export const getBattleData = async (req, res) => {
 }
 
 export const runCode = async (req, res) => {
-    try {
-    const { code } = req.body;
+  try {
+    const { code, problemId } = req.body;
+
+    const problem = await Problem.findById(problemId);
+    if (!problem) return res.status(404).json({ message: "Problem not found" });
 
     const id = uuidv4();
     const tempDir = path.join(process.cwd(), "temp");
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir);
+    const codePath = path.join(tempDir, `${id}.cjs`);
+    fs.writeFileSync(codePath, code);
+
+    let results = [];
+
+    try {
+      for (let tc of problem.testCases) {
+        try {
+          const output = execSync(`node ${codePath}`, {
+            input: tc.input,
+            timeout: 2000
+          }).toString().trim();
+
+          results.push({
+            input: tc.input,
+            expected: tc.output,
+            got: output,
+            passed: output === tc.output.trim()
+          });
+
+        } catch (err) {
+          results.push({
+            input: tc.input,
+            expected: tc.output,
+            got: err.stderr?.toString() || "Runtime Error",
+            passed: false
+          });
+        }
+      }
+    } finally {
+      if (fs.existsSync(codePath)) fs.unlinkSync(codePath);
     }
 
-    const filePath = path.join(tempDir, `${id}.js`);
-
-    fs.writeFileSync(filePath, code);
-
-    exec(`node ${filePath}`, (error, stdout, stderr) => {
-      fs.unlinkSync(filePath);
-
-      if (error) {
-        return res.json({ error: stderr || error.message });
-      }
-
-      res.json({ output: stdout });
+    res.json({
+      success: true,
+      allPassed: results.every(r => r.passed),
+      results
     });
 
   } catch (err) {
-    console.error("RunCode Error:", err);
-    res.status(500).json({ message: "Execution failed", error: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Judge failed" });
   }
 }
