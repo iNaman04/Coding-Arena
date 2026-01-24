@@ -31,6 +31,7 @@ const CodingBattlePage: React.FC = () => {
 
 
     const [language, setLanguage] = useState('javascript');
+    const [Output, setOutput] = useState('');
     const [code, setCode] = useState(`function solution(nums, target) {
     // Write your code here
     
@@ -49,38 +50,6 @@ const CodingBattlePage: React.FC = () => {
         cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n}`
     };
 
-
-    // Mock question data - this will come from your API
-    // const [question, setQuestion] = useState<Question>({
-    //     id: '1',
-    //     title: 'Two Sum',
-    //     difficulty: 'Easy',
-    //     description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.',
-    //     examples: [
-    //         {
-    //             input: 'nums = [2,7,11,15], target = 9',
-    //             output: '[0,1]',
-    //             explanation: 'Because nums[0] + nums[1] == 9, we return [0, 1].'
-    //         },
-    //         {
-    //             input: 'nums = [3,2,4], target = 6',
-    //             output: '[1,2]'
-    //         }
-    //     ],
-    //     constraints: [
-    //         '2 <= nums.length <= 10^4',
-    //         '-10^9 <= nums[i] <= 10^9',
-    //         '-10^9 <= target <= 10^9',
-    //         'Only one valid answer exists.'
-    //     ],
-    //     testCases: [
-    //         { input: '[2,7,11,15], 9', output: '[0,1]' },
-    //         { input: '[3,2,4], 6', output: '[1,2]' },
-    //         { input: '[3,3], 6', output: '[0,1]' }
-    //     ]
-    // });
-
-    // Timer countdown
 
     useEffect(() => {
         const fetchBattleData = async () => {
@@ -118,18 +87,16 @@ const CodingBattlePage: React.FC = () => {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // const handleRunCode = async () => {
-    //     setIsRunning(true);
-    //     // Simulate API call to run test cases
-    //     setTimeout(() => {
-    //         const results = question.testCases.map(tc => ({
-    //             ...tc,
-    //             passed: Math.random() > 0.3 // Random for demo
-    //         }));
-    //         setTestResults(results);
-    //         setIsRunning(false);
-    //     }, 1500);
-    // };
+    const handleRunCode = async () => {
+        const response = await axiosInstance.post('/battle/run-code', {
+            code,
+            input: ''
+        },
+            { withCredentials: true }
+        );
+        console.log(response.data);
+        
+    };
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -353,7 +320,7 @@ const CodingBattlePage: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-3">
                             <button
-                                // onClick={handleRunCode}
+                                onClick={handleRunCode}
                                 disabled={isRunning}
                                 className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
