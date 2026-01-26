@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Code, Play, Send, Clock, User, Trophy, CheckCircle, XCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Code, Play, Send, Clock, User, Trophy, CheckCircle, XCircle, LoaderIcon } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../libs/axios.ts';
 import Editor from '@monaco-editor/react';
+import { useAuthStore } from '../store/Authstore.ts';
 interface TestCase {
     input: string;
     output: string;
@@ -25,7 +26,8 @@ interface Question {
 
 const CodingBattlePage: React.FC = () => {
     const navigate = useNavigate();
-    const sessionIdFromUrl = window.location.pathname.split("/").pop();
+    const {sessionId} = useParams();
+    const {isCheckingAuth, Authuser} = useAuthStore();
 
     const [Problem, setProblem] = useState<Question | null>(null);
 
@@ -52,9 +54,11 @@ const CodingBattlePage: React.FC = () => {
 
 
     useEffect(() => {
+        
+        if(isCheckingAuth || !Authuser) return ;
         const fetchBattleData = async () => {
             try {
-                const response = await axiosInstance.post(`/battle/${sessionIdFromUrl}`, {}, { withCredentials: true });
+                const response = await axiosInstance.post(`/battle/${sessionId}`, {}, { withCredentials: true });
                 setProblem(response.data.problem);
 
             } catch (error) {
@@ -62,12 +66,12 @@ const CodingBattlePage: React.FC = () => {
             }
         }
         fetchBattleData();
-    }, [sessionIdFromUrl])
+    }, [sessionId, isCheckingAuth, Authuser]);
 
-
+    
 
     useEffect(() => {
-        if (!sessionIdFromUrl) {
+        if (!sessionId) {
             navigate("/home");
         }
     }, []);
@@ -80,6 +84,11 @@ const CodingBattlePage: React.FC = () => {
         }, 1000);
         return () => clearInterval(timer);
     }, []);
+
+
+    if (isCheckingAuth || !Problem) {
+        return <LoaderIcon className="animate-spin" />;
+    }
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);

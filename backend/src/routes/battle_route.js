@@ -6,6 +6,6 @@ import { runCode } from "../controllers/battle_controller.js";
 const router = express.Router();
 
 router.post("/run-code", runCode);
-router.post("/:SessionId", protect, getBattleData);
+router.post("/:sessionId", protect, getBattleData);
 
 export default router;  

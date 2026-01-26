@@ -73,7 +73,7 @@ export const useSessionstore = create<SessionState>((set) => ({
                 return response.data.sessionId;
             }
         } catch (error : any) {
-            if(error.response?.status === 404){
+            if(error.response?.status === 401){
                 return 
             }
             console.log(error);

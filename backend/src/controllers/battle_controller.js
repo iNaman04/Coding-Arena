@@ -11,16 +11,27 @@ import Problem from '../models/problems.js';
 
 export const getBattleData = async (req, res) => {
     try {
-        const { SessionId } = req.params;
-        const session = await Session.findById(SessionId).populate("problem");
+        const { sessionId } = req.params;
+
+
+        if (!sessionId || sessionId === "undefined") {
+            return res.status(400).json({ message: "Session ID missing" });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+            return res.status(400).json({ message: "Invalid Session ID" });
+        }
+
+
+
+        const session = await Session.findById(sessionId).populate("problem");
 
         if (!session) {
             return res.status(404).json({ message: "Session not found" });
         }
 
-        // if (session.status !== "ACTIVE") {
-        //     return res.status(400).json({ message: "Session is not active" });
-        // }
+
+
         if (!session.problem) {
             return res.status(500).json({
                 message: "Problem not assigned to session"
@@ -49,57 +60,57 @@ export const getBattleData = async (req, res) => {
 }
 
 export const runCode = async (req, res) => {
-  try {
-    const { code, problemId } = req.body;
-
-    const problem = await Problem.findById(problemId);
-    if (!problem) return res.status(404).json({ message: "Problem not found" });
-
-    const id = uuidv4();
-    const tempDir = path.join(process.cwd(), "temp");
-    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
-
-    const codePath = path.join(tempDir, `${id}.cjs`);
-    fs.writeFileSync(codePath, code);
-
-    let results = [];
-
     try {
-      for (let tc of problem.testCases) {
+        const { code, problemId } = req.body;
+
+        const problem = await Problem.findById(problemId);
+        if (!problem) return res.status(404).json({ message: "Problem not found" });
+
+        const id = uuidv4();
+        const tempDir = path.join(process.cwd(), "temp");
+        if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+
+        const codePath = path.join(tempDir, `${id}.cjs`);
+        fs.writeFileSync(codePath, code);
+
+        let results = [];
+
         try {
-          const output = execSync(`node ${codePath}`, {
-            input: tc.input,
-            timeout: 2000
-          }).toString().trim();
+            for (let tc of problem.testCases) {
+                try {
+                    const output = execSync(`node ${codePath}`, {
+                        input: tc.input,
+                        timeout: 2000
+                    }).toString().trim();
 
-          results.push({
-            input: tc.input,
-            expected: tc.output,
-            got: output,
-            passed: output === tc.output.trim()
-          });
+                    results.push({
+                        input: tc.input,
+                        expected: tc.output,
+                        got: output,
+                        passed: output === tc.output.trim()
+                    });
 
-        } catch (err) {
-          results.push({
-            input: tc.input,
-            expected: tc.output,
-            got: err.stderr?.toString() || "Runtime Error",
-            passed: false
-          });
+                } catch (err) {
+                    results.push({
+                        input: tc.input,
+                        expected: tc.output,
+                        got: err.stderr?.toString() || "Runtime Error",
+                        passed: false
+                    });
+                }
+            }
+        } finally {
+            if (fs.existsSync(codePath)) fs.unlinkSync(codePath);
         }
-      }
-    } finally {
-      if (fs.existsSync(codePath)) fs.unlinkSync(codePath);
+
+        res.json({
+            success: true,
+            allPassed: results.every(r => r.passed),
+            results
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Judge failed" });
     }
-
-    res.json({
-      success: true,
-      allPassed: results.every(r => r.passed),
-      results
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Judge failed" });
-  }
 }

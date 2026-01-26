@@ -47,10 +47,15 @@ function App() {
 
   useEffect(()=>{
       const restoreSession = async()=>{
-        const response = await checkActiveSession();
-        if(response){
-          socket.emit("join-session-room", response.sessionId);
-          navigate(`/battle/${response.sessionId}`);
+        
+        if(isCheckingAuth || !Authuser) return ;
+
+        const sessionId = await checkActiveSession();
+        if(sessionId){
+          socket.emit("join-session-room", sessionId);
+          //navigate(`/battle/${response.sessionId}`);
+          console.log("Session restored" , sessionId);
+          
         }
       }
       restoreSession();
