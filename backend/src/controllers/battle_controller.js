@@ -7,6 +7,9 @@ import path from 'path';
 import { exec } from 'child_process';
 import { execSync } from 'child_process';
 import Problem from '../models/problems.js';
+import axios from "axios";
+import { stdin } from "process";
+import { error } from "console";
 
 
 export const getBattleData = async (req, res) => {
@@ -42,13 +45,15 @@ export const getBattleData = async (req, res) => {
             sessionId: session._id,
             startedAt: session.startTime,
             problem: {
-                id: session.problem._id,
+                _id: session.problem._id,
                 title: session.problem.title,
                 description: session.problem.description,
                 difficulty: session.problem.difficulty,
                 examples: session.problem.examples,
                 testCases: session.problem.testCases,
-                constraints: session.problem.constraints
+                constraints: session.problem.constraints,
+                starterCode: session.problem.starterCode,
+                wrappers: session.problem.wrappers
             }
         })
 
@@ -61,56 +66,56 @@ export const getBattleData = async (req, res) => {
 
 export const runCode = async (req, res) => {
     try {
-        const { code, problemId } = req.body;
+        const { code, problemId, language } = req.body;
 
         const problem = await Problem.findById(problemId);
-        if (!problem) return res.status(404).json({ message: "Problem not found" });
-
-        const id = uuidv4();
-        const tempDir = path.join(process.cwd(), "temp");
-        if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
-
-        const codePath = path.join(tempDir, `${id}.cjs`);
-        fs.writeFileSync(codePath, code);
-
-        let results = [];
-
-        try {
-            for (let tc of problem.testCases) {
-                try {
-                    const output = execSync(`node ${codePath}`, {
-                        input: tc.input,
-                        timeout: 2000
-                    }).toString().trim();
-
-                    results.push({
-                        input: tc.input,
-                        expected: tc.output,
-                        got: output,
-                        passed: output === tc.output.trim()
-                    });
-
-                } catch (err) {
-                    results.push({
-                        input: tc.input,
-                        expected: tc.output,
-                        got: err.stderr?.toString() || "Runtime Error",
-                        passed: false
-                    });
-                }
-            }
-        } finally {
-            if (fs.existsSync(codePath)) fs.unlinkSync(codePath);
+        if (!problem) {
+            return res.status(404).json({ message: "Problem not found" });
         }
 
-        res.json({
-            success: true,
-            allPassed: results.every(r => r.passed),
-            results
-        });
+        const langWrapper = problem.wrappers.find(w => w.language === language);
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Judge failed" });
+        const finalScript = `${code}\n\n${langWrapper.code}`;
+
+        const results = [];
+
+        const pistonLangMap = {
+            javascript: "javascript",
+            python: "python",
+        };
+
+        for (let tc of problem.testCases) {
+            const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
+                language: pistonLangMap[language] || language,
+                version: "*",
+                files: [
+                    {
+                        content: finalScript
+                    }
+                ],
+                stdin: tc.input
+            })
+
+            const run = response.data.run;
+            const actualOutput = run.stdout.trim();
+            const errorOutput = run.stderr.trim();
+
+            console.log("errorOutput", errorOutput);
+            
+
+            results.push({
+                input: tc.input,
+                output: tc.output,
+                actualOutput: errorOutput ? `Error: ${errorOutput}` : actualOutput,
+                passed: actualOutput === tc.output.trim() && !errorOutput
+            })
+
+        }
+
+
+        res.status(200).json({ success: true, results });
+    } catch (error) {
+        console.error("Piston API Error:", error.response?.data || error.message);
+        res.status(500).json({ message: "Execution failed", error: error.message });
     }
 }

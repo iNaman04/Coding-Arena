@@ -8,6 +8,7 @@ interface TestCase {
     input: string;
     output: string;
     passed?: boolean;
+    actualOutput?: string;
 }
 
 interface StarterCode {
@@ -108,8 +109,13 @@ const CodingBattlePage: React.FC = () => {
 
     const handleRunCode = async () => {
 
+        if (!Problem || !Problem._id) {
+            console.error("Problem data not loaded yet");
+            return;
+        }
         try {
             setIsRunning(true);
+            console.log("Sending ID:", Problem._id)
             const response = await axiosInstance.post("battle/run-code", {
                 code,
                 problemId: Problem._id,
