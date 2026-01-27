@@ -10,10 +10,15 @@ interface TestCase {
     passed?: boolean;
 }
 
+interface StarterCode {
+    language: string;
+    code: string;
+}
+
 interface Question {
-    id: string;
+    _id: string; // MongoDB uses _id
     title: string;
-    difficulty: 'Easy' | 'Medium' | 'Hard';
+    difficulty: 'EASY' | 'MEDIUM' | 'HARD';
     description: string;
     examples: Array<{
         input: string;
@@ -21,13 +26,14 @@ interface Question {
         explanation?: string;
     }>;
     constraints: string[];
+    starterCode: StarterCode[]; // Added this
     testCases: TestCase[];
 }
 
 const CodingBattlePage: React.FC = () => {
     const navigate = useNavigate();
-    const {sessionId} = useParams();
-    const {isCheckingAuth, Authuser} = useAuthStore();
+    const { sessionId } = useParams();
+    const { isCheckingAuth, Authuser } = useAuthStore();
 
     const [Problem, setProblem] = useState<Question | null>(null);
 
@@ -54,12 +60,16 @@ const CodingBattlePage: React.FC = () => {
 
 
     useEffect(() => {
-        
-        if(isCheckingAuth || !Authuser) return ;
+
+        if (isCheckingAuth || !Authuser) return;
         const fetchBattleData = async () => {
             try {
                 const response = await axiosInstance.post(`/battle/${sessionId}`, {}, { withCredentials: true });
                 setProblem(response.data.problem);
+                const starter = response.data.problem.starterCode.find((s: StarterCode) => s.language === language);
+                if (starter) {
+                    setCode(starter.code);
+                }
 
             } catch (error) {
                 console.log(error);
@@ -68,7 +78,7 @@ const CodingBattlePage: React.FC = () => {
         fetchBattleData();
     }, [sessionId, isCheckingAuth, Authuser]);
 
-    
+
 
     useEffect(() => {
         if (!sessionId) {
@@ -97,14 +107,21 @@ const CodingBattlePage: React.FC = () => {
     };
 
     const handleRunCode = async () => {
-        const response = await axiosInstance.post('/battle/run-code', {
-            code,
-            input: ''
-        },
-            { withCredentials: true }
-        );
-        console.log(response.data);
-        
+
+        try {
+            setIsRunning(true);
+            const response = await axiosInstance.post("battle/run-code", {
+                code,
+                problemId: Problem._id,
+                language: language
+            }, { withCredentials: true });
+
+            setTestResults(response.data.results);
+        } catch (error) {
+            console.error("Error running code:", error);
+        } finally {
+            setIsRunning(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -258,14 +275,20 @@ const CodingBattlePage: React.FC = () => {
                                 onChange={(e) => {
                                     const lang = e.target.value;
                                     setLanguage(lang);
-                                    setCode(templates[lang]);
+                                    const starter = Problem?.starterCode.find((s: StarterCode) => s.language === lang);
+                                    if (starter) {
+                                        setCode(starter.code);
+                                    }
+                                    else {
+                                        setCode("language not supported \n");
+                                    }
                                 }}
                                 className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-purple-500"
                             >
                                 <option value="javascript">JavaScript</option>
                                 <option value="python">Python</option>
-                                <option value="java">Java</option>
-                                <option value="cpp">C++</option>
+                                {/* <option value="java">Java</option>
+                                <option value="cpp">C++</option> */}
                             </select>
                         </div>
                         <div className="text-xs text-gray-400">
