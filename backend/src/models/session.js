@@ -19,6 +19,16 @@ const sessionSchema = new mongoose.Schema({
         ref: "User",
         default: null
     }
+    ,
+    submissions: [
+        {
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+            timeTaken: Number,
+            isCorrect: Boolean,
+            code: String,
+            submittedAt: { type: Date, default: Date.now }
+        }
+    ]
 
 }, { timestamps: true });
 

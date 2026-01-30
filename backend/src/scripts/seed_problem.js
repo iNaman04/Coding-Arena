@@ -21,8 +21,26 @@ const problems = [
         ],
         // The actual raw data passed to the wrapper via stdin
         testCases: [
+            // 1. Basic Sample Cases (Visible)
             { input: "[2,7,11,15]\n9", output: "[0,1]" },
-            { input: "[3,2,4]\n6", output: "[1,2]" }
+            { input: "[3,2,4]\n6", output: "[1,2]" },
+
+            // 2. Duplicate Values (Hidden)
+            // Tests if they use the same index twice (incorrect) or find the two different indices (correct)
+            { input: "[3,3]\n6", output: "[0,1]" },
+
+            // 3. Negative Numbers (Hidden)
+            // Tests if their logic handles subtraction/negative results
+            { input: "[-1,-2,-3,-4,-5]\n-8", output: "[2,4]" },
+
+            // 4. Zeroes (Hidden)
+            { input: "[0,4,3,0]\n0", output: "[0,3]" },
+
+            // 5. Unsorted & Larger Target (Hidden)
+            { input: "[10,25,30,50,75,100]\n150", output: "[3,5]" },
+
+            // 6. Non-adjacent elements (Hidden)
+            { input: "[1,5,9]\n10", output: "[0,2]" }
         ],
         // What the user sees in the editor
         starterCode: [
@@ -38,10 +56,19 @@ const problems = [
                 code: `
 const fs = require('fs');
 const input = fs.readFileSync(0, 'utf8').trim().split('\\n');
+if (input.length < 2) process.exit(0);
+
 const nums = JSON.parse(input[0]);
 const target = JSON.parse(input[1]);
+
 const result = twoSum(nums, target);
-console.log(JSON.stringify(result));
+
+// Sort the array so [1,0] becomes [0,1] for consistent comparison
+if (Array.isArray(result)) {
+    console.log(JSON.stringify(result.sort((a, b) => a - b)));
+} else {
+    console.log("null");
+}
         `
             }
         ]

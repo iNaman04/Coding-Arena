@@ -50,7 +50,7 @@ export const getBattleData = async (req, res) => {
                 description: session.problem.description,
                 difficulty: session.problem.difficulty,
                 examples: session.problem.examples,
-                testCases: session.problem.testCases,
+                testCases: session.problem.testCases.slice(0, 2),
                 constraints: session.problem.constraints,
                 starterCode: session.problem.starterCode,
                 wrappers: session.problem.wrappers,
