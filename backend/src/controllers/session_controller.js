@@ -60,7 +60,7 @@ export const joinSesson = async (req, res) => {
         if (session.status !== "WAITING") {
             return res.status(400).json({ message: "Session already started" });
         }
-
+        
         if (session.players.length >= 2) {
             return res.status(400).json({
                 message: "Session is full"
@@ -71,7 +71,7 @@ export const joinSesson = async (req, res) => {
 
         if (session.players.length === 2) {
             session.status = "ACTIVE";
-            session.startedAt = new Date();
+            session.startTime = new Date();
 
             const problems = await Problem.find({
                 difficulty: session.difficulty.toUpperCase()
@@ -97,7 +97,7 @@ export const joinSesson = async (req, res) => {
             sessionId: session._id,
             inviteCode: session.inviteCode,
             status: session.status,
-            startTime: session.startedAt
+            startTime: session.startTime,
         });
     } catch (error) {
         console.error(error);

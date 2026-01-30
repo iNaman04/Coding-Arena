@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { Code, Play, Send, Clock, User, Trophy, CheckCircle, XCircle, LoaderIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../libs/axios.ts';
@@ -29,6 +29,7 @@ interface Question {
     constraints: string[];
     starterCode: StarterCode[]; // Added this
     testCases: TestCase[];
+    startedAt?: string; // Added this for battle start time
 }
 
 const CodingBattlePage: React.FC = () => {
@@ -49,7 +50,9 @@ const CodingBattlePage: React.FC = () => {
     const [testResults, setTestResults] = useState<TestCase[]>([]);
     const [isRunning, setIsRunning] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+    const [timeLeft, setTimeLeft] = useState(1800);
+    const [ElapsedTime, setElapsedTime] = useState<number>(0);
+    const [isDataLoaded, setIsDataLoaded] = useState(false); // 30 minutes in seconds
 
 
     const templates: Record<string, string> = {
@@ -67,10 +70,25 @@ const CodingBattlePage: React.FC = () => {
             try {
                 const response = await axiosInstance.post(`/battle/${sessionId}`, {}, { withCredentials: true });
                 setProblem(response.data.problem);
+
+                const startedAt = response.data.startedAt;
+                console.log(startedAt);
+                
+
+                if (startedAt) {
+                    const startTime = new Date(startedAt).getTime();
+                    const now = new Date().getTime();
+                    const diffInSeconds = Math.floor((now - startTime) / 1000);
+
+                    setElapsedTime(diffInSeconds > 0 ? diffInSeconds : 0);
+                }
+
                 const starter = response.data.problem.starterCode.find((s: StarterCode) => s.language === language);
                 if (starter) {
                     setCode(starter.code);
                 }
+
+                setIsDataLoaded(true);
 
             } catch (error) {
                 console.log(error);
@@ -79,6 +97,31 @@ const CodingBattlePage: React.FC = () => {
         fetchBattleData();
     }, [sessionId, isCheckingAuth, Authuser]);
 
+    useEffect(() => {
+        if (!isDataLoaded || !Problem) return;
+
+        const timer = setInterval(() => {
+            setElapsedTime((prev) => prev + 1);
+        }, 1000);
+
+        return () => clearInterval(timer);
+
+
+    }, [isDataLoaded, Problem])
+
+
+    useEffect(() => {
+        if (!isDataLoaded || !Problem || !Problem.startedAt) return;
+
+        const timer = setInterval(() => {
+            // Calculate based on real clock time, not just adding +1
+            const startTime = new Date(Problem.startedAt!).getTime(); // Ensure you store this
+            const now = new Date().getTime();
+            setElapsedTime(Math.floor((now - startTime) / 1000));
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isDataLoaded, Problem]);
 
 
     useEffect(() => {
@@ -165,8 +208,8 @@ const CodingBattlePage: React.FC = () => {
                     <div className="h-6 w-px bg-slate-600"></div>
                     <div className="flex items-center space-x-2 text-sm">
                         <Clock className="w-4 h-4 text-purple-400" />
-                        <span className={`font-mono ${timeLeft < 300 ? 'text-red-400' : 'text-gray-300'}`}>
-                            {formatTime(timeLeft)}
+                        <span className="font-mono text-gray-300">
+                            Time: {formatTime(ElapsedTime)}
                         </span>
                     </div>
                 </div>

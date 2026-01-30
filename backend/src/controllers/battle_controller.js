@@ -53,7 +53,8 @@ export const getBattleData = async (req, res) => {
                 testCases: session.problem.testCases,
                 constraints: session.problem.constraints,
                 starterCode: session.problem.starterCode,
-                wrappers: session.problem.wrappers
+                wrappers: session.problem.wrappers,
+                startedAt: session.startTime,
             }
         })
 
@@ -100,6 +101,8 @@ export const runCode = async (req, res) => {
             const actualOutput = run.stdout.trim();
             const errorOutput = run.stderr.trim();
 
+            console.log("actualOutput", actualOutput);
+            
             console.log("errorOutput", errorOutput);
             
 
@@ -112,7 +115,7 @@ export const runCode = async (req, res) => {
 
         }
 
-
+        
         res.status(200).json({ success: true, results });
     } catch (error) {
         console.error("Piston API Error:", error.response?.data || error.message);
