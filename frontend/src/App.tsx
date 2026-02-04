@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import Battlepage from './pages/Battlepage.tsx'
 import { useSessionstore } from './store/Sessionstore.ts'
 import { Loader } from 'lucide-react'
+import Leaderboard from './pages/Leaderboard.tsx'
 
 function App() {
 
@@ -81,7 +82,7 @@ function App() {
 
         <Route path="/home" element={Authuser ? <HomePage /> : <Navigate to="/" />} />
         <Route path="/battle/:sessionId" element={Authuser ? <Battlepage /> : <Navigate to="/" />} />
-
+        <Route path="/leaderboard/:sessionId" element={Authuser ? <Leaderboard /> : <Navigate to="/" />} />
       </Routes>
 
     </div>

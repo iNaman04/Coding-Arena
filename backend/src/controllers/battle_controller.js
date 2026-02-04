@@ -102,9 +102,9 @@ export const runCode = async (req, res) => {
             const errorOutput = run.stderr.trim();
 
             console.log("actualOutput", actualOutput);
-            
+
             console.log("errorOutput", errorOutput);
-            
+
 
             results.push({
                 input: tc.input,
@@ -115,10 +115,81 @@ export const runCode = async (req, res) => {
 
         }
 
-        
+
         res.status(200).json({ success: true, results });
     } catch (error) {
         console.error("Piston API Error:", error.response?.data || error.message);
         res.status(500).json({ message: "Execution failed", error: error.message });
+    }
+}
+
+export const submitCode = async (req, res) => {
+    try {
+        const { sessionId, code, timetaken, language } = req.body;
+        const userId = req.user._id;
+
+        const session = await Session.findById(sessionId).populate("problem");
+        if (!session) {
+            return res.status(404).json({ message: "Session not found" });
+        }
+
+        const problem = session.problem;
+        const langWrapper = problem.wrappers.find(w => w.language === req.body.language);
+
+        const finalScript = `${code}\n\n${langWrapper.code}`;
+
+        const testResults = await Promise.all(problem.testCases.map(async (tc) => {
+            try {
+                const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
+                    language: language,
+                    version: "*",
+                    files: [{ content: finalScript }],
+                    stdin: tc.input
+                });
+
+                const actualOutput = response.data.run.stdout.trim();
+                const errorOutput = response.data.run.stderr.trim();
+
+                // Check if output matches and there are no execution errors
+                const passed = actualOutput === tc.output.trim() && !errorOutput;
+                return passed;
+            } catch (err) {
+                return false;
+            }
+        }));
+
+        const allPassed = testResults.every(result => result === true);
+
+        const submissionData = {
+            userId,
+            timetaken,
+            isCorrect: allPassed,
+            code,
+        }
+
+        const existingIndex = session.submissions.findIndex(s => s.userId.toString() === userId.toString());
+        if (existingIndex > -1) {
+            session.submissions[existingIndex] = submissionData;
+        } else {
+            session.submissions.push(submissionData);
+        }
+
+        if (session.submissions.length >= 2) {
+            session.status = "COMPLETED";
+            await session.save(); // Save first!
+            req.io.to(sessionId.toString()).emit("battle_finished", { sessionId });
+        } else {
+            await session.save(); // Still save the single submission
+        }
+
+        res.status(200).json({
+            success: true,
+            isCorrect: allPassed,
+            isBattleOver: session.status === "COMPLETED"
+        });
+    } catch (error) {
+        console.log("error submitting the code ", error);
+
+        res.status(500).json({ message: "Submission failed", error: error.message });
     }
 }

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../libs/axios.ts';
 import Editor from '@monaco-editor/react';
 import { useAuthStore } from '../store/Authstore.ts';
+import { socket } from '../libs/sockets.ts';
 interface TestCase {
     input: string;
     output: string;
@@ -52,15 +53,12 @@ const CodingBattlePage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [timeLeft, setTimeLeft] = useState(1800);
     const [ElapsedTime, setElapsedTime] = useState<number>(0);
-    const [isDataLoaded, setIsDataLoaded] = useState(false); // 30 minutes in seconds
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
+    const [isWaiting, setIsWaiting] = useState(false);
+    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+    const [isBattleOver, setIsBattleOver] = useState(false);
 
 
-    const templates: Record<string, string> = {
-        javascript: `function solution(input) {\n\n}`,
-        python: `def solution(input):\n    pass`,
-        java: `class Solution {\n    public static void solution() {\n    }\n}`,
-        cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n}`
-    };
 
 
     useEffect(() => {
@@ -73,7 +71,7 @@ const CodingBattlePage: React.FC = () => {
 
                 const startedAt = response.data.startedAt;
                 console.log(startedAt);
-                
+
 
                 if (startedAt) {
                     const startTime = new Date(startedAt).getTime();
@@ -139,6 +137,26 @@ const CodingBattlePage: React.FC = () => {
         return () => clearInterval(timer);
     }, []);
 
+    useEffect(() => {
+        if (!sessionId || !isDataLoaded) return;
+
+        // Join the specific room for this battle
+        socket.emit("join-session-room", { sessionId });
+
+        // Listen for the 'battle_finished' event
+        socket.on("battle_finished", () => {
+            setIsBattleOver(true);
+            // Small delay so the user can process that it's over
+            setTimeout(() => {
+                navigate(`/leaderboard/${sessionId}`);
+            }, 2000);
+        });
+
+        return () => {
+            socket.off("battle_finished");
+        };
+    }, [sessionId, isDataLoaded]);
+
 
     if (isCheckingAuth || !Problem) {
         return <LoaderIcon className="animate-spin" />;
@@ -174,13 +192,29 @@ const CodingBattlePage: React.FC = () => {
     };
 
     const handleSubmit = async () => {
+        if (!Problem || !Problem._id) return;
         setIsSubmitting(true);
-        // Simulate API call to submit solution
-        setTimeout(() => {
-            console.log('Submitting code:', code);
-            // Handle submission logic with your API
+        try {
+            const response = await axiosInstance.post("battle/submit", {
+                sessionId,
+                code,
+                language,
+                timetaken: ElapsedTime
+            }, { withCredentials: true });
+
+            const { isCorrect: passed, isBattleOver: over } = response.data;
+            setIsCorrect(passed);
+            setIsBattleOver(over);
+            setIsWaiting(true); // switches to waiting UI
+
+            if (over) {
+                setTimeout(() => navigate(`/leaderboard/${sessionId}`), 1500);
+            }
+        } catch (error) {
+            console.error("Error submitting code:", error);
+        } finally {
             setIsSubmitting(false);
-        }, 2000);
+        }
     };
 
     const getDifficultyColor = (difficulty: string) => {
@@ -191,6 +225,39 @@ const CodingBattlePage: React.FC = () => {
             default: return 'text-gray-400';
         }
     };
+
+    // Inside your CodingBattlePage component, before the main return:
+    if (isWaiting && !isBattleOver) {
+        return (
+            <div className="h-screen w-screen bg-slate-900 flex flex-col items-center justify-center text-white p-4">
+                <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl flex flex-col items-center max-w-md text-center">
+                    <div className="relative mb-6">
+                        <div className="w-20 h-20 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
+                        {isCorrect ? (
+                            <CheckCircle className="w-10 h-10 text-green-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                        ) : (
+                            <XCircle className="w-10 h-10 text-red-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                        )}
+                    </div>
+
+                    <h2 className="text-2xl font-bold mb-2">
+                        {isCorrect ? "Solution Passed!" : "Submission Received"}
+                    </h2>
+                    <p className="text-gray-400 mb-6">
+                        {isCorrect
+                            ? "Great job! Waiting for your opponent to finish..."
+                            : "Your code didn't pass all cases, but your time is locked. Waiting for opponent..."}
+                    </p>
+
+                    <div className="bg-slate-900 px-6 py-3 rounded-xl border border-slate-700 flex items-center space-x-3">
+                        <Clock className="w-5 h-5 text-purple-400" />
+                        <span className="font-mono text-lg font-bold">Your Time: {formatTime(ElapsedTime)}</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="h-screen w-screen bg-slate-900 text-white flex flex-col overflow-hidden">
