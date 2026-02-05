@@ -138,31 +138,33 @@ export const submitCode = async (req, res) => {
 
         const finalScript = `${code}\n\n${langWrapper.code}`;
 
-        const testResults = await Promise.all(problem.testCases.map(async (tc) => {
+        const pistonLangMap = {
+            javascript: "javascript",
+            python: "python",
+        };
+
+        const testResults = [];
+        for (const tc of problem.testCases) {
             try {
                 const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
-                    language: language,
+                    language: pistonLangMap[language] || language,
                     version: "*",
                     files: [{ content: finalScript }],
                     stdin: tc.input
                 });
-
-                const actualOutput = response.data.run.stdout.trim();
-                const errorOutput = response.data.run.stderr.trim();
-
-                // Check if output matches and there are no execution errors
-                const passed = actualOutput === tc.output.trim() && !errorOutput;
-                return passed;
+                const actual = response.data.run.stdout.trim().replace(/\s+/g, '');
+                const expected = tc.output.trim().replace(/\s+/g, '');
+                testResults.push(actual === expected && !response.data.run.stderr);
             } catch (err) {
-                return false;
+                testResults.push(false);
             }
-        }));
+        }
 
         const allPassed = testResults.every(result => result === true);
 
         const submissionData = {
             userId,
-            timeTaken : timetaken,
+            timeTaken: timetaken,
             isCorrect: allPassed,
             code,
             testPassed: testResults.filter(result => result === true).length,
