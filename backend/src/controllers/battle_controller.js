@@ -165,7 +165,7 @@ export const submitCode = async (req, res) => {
             timeTaken : timetaken,
             isCorrect: allPassed,
             code,
-            testsPassed: testResults.filter(r => r === true).length,
+            testPassed: testResults.filter(result => result === true).length,
             totalTests: problem.testCases.length
         }
 
