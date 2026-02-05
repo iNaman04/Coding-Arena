@@ -95,67 +95,48 @@ const CodingBattlePage: React.FC = () => {
         fetchBattleData();
     }, [sessionId, isCheckingAuth, Authuser]);
 
+  useEffect(() => {
+    // Only run the timer if data is loaded and we aren't in a "waiting" or "finished" state
+    if (!isDataLoaded || !Problem?.startedAt || isBattleOver || isWaiting) return;
+
+    const startTime = new Date(Problem.startedAt).getTime();
+
+    const timer = setInterval(() => {
+        const now = new Date().getTime();
+        // Calculate total seconds passed since the battle began
+        const diffInSeconds = Math.floor((now - startTime) / 1000);
+        
+        setElapsedTime(diffInSeconds > 0 ? diffInSeconds : 0);
+    }, 1000);
+
+    return () => clearInterval(timer);
+}, [isDataLoaded, Problem?.startedAt, isBattleOver, isWaiting]);
     useEffect(() => {
-        if (!isDataLoaded || !Problem) return;
+    if (sessionId && socket && isDataLoaded) {
+        // Use ONE consistent event name that matches your backend
+        // Make sure your backend uses the same string!
+        socket.emit("join-session-room",  sessionId );
+        
+        console.log("Joined socket room:", sessionId);
 
-        const timer = setInterval(() => {
-            setElapsedTime((prev) => prev + 1);
-        }, 1000);
-
-        return () => clearInterval(timer);
-
-
-    }, [isDataLoaded, Problem])
-
-
-    useEffect(() => {
-        if (!isDataLoaded || !Problem || !Problem.startedAt) return;
-
-        const timer = setInterval(() => {
-            // Calculate based on real clock time, not just adding +1
-            const startTime = new Date(Problem.startedAt!).getTime(); // Ensure you store this
-            const now = new Date().getTime();
-            setElapsedTime(Math.floor((now - startTime) / 1000));
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [isDataLoaded, Problem]);
-
-
-    useEffect(() => {
-        if (!sessionId) {
-            navigate("/home");
-        }
-    }, []);
-
-
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-        }, 1000);
-        return () => clearInterval(timer);
-    }, []);
-
-    useEffect(() => {
-        if (!sessionId || !isDataLoaded) return;
-
-        // Join the specific room for this battle
-        socket.emit("join-session-room", { sessionId });
-
-        // Listen for the 'battle_finished' event
-        socket.on("battle_finished", () => {
+        // Define the handler
+        const handleBattleFinished = () => {
+            console.log("Battle finished event received!");
             setIsBattleOver(true);
-            // Small delay so the user can process that it's over
             setTimeout(() => {
                 navigate(`/leaderboard/${sessionId}`);
             }, 2000);
-        });
-
-        return () => {
-            socket.off("battle_finished");
         };
-    }, [sessionId, isDataLoaded]);
+
+        // Listen for the event
+        socket.on("battle_finished", handleBattleFinished);
+
+        // Cleanup
+        return () => {
+            socket.off("battle_finished", handleBattleFinished);
+        };
+    }
+}, [sessionId, socket, isDataLoaded, navigate]);
 
 
     if (isCheckingAuth || !Problem) {

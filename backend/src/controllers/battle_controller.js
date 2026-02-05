@@ -162,9 +162,11 @@ export const submitCode = async (req, res) => {
 
         const submissionData = {
             userId,
-            timetaken,
+            timeTaken : timetaken,
             isCorrect: allPassed,
             code,
+            testsPassed: testResults.filter(r => r === true).length,
+            totalTests: problem.testCases.length
         }
 
         const existingIndex = session.submissions.findIndex(s => s.userId.toString() === userId.toString());
@@ -177,7 +179,9 @@ export const submitCode = async (req, res) => {
         if (session.submissions.length >= 2) {
             session.status = "COMPLETED";
             await session.save(); // Save first!
-            req.io.to(sessionId.toString()).emit("battle_finished", { sessionId });
+            req.io.to(sessionId.toString()).emit("battle_finished", {
+                sessionId: sessionId.toString()
+            });
         } else {
             await session.save(); // Still save the single submission
         }

@@ -26,7 +26,9 @@ const sessionSchema = new mongoose.Schema({
             timeTaken: Number,
             isCorrect: Boolean,
             code: String,
-            submittedAt: { type: Date, default: Date.now }
+            submittedAt: { type: Date, default: Date.now },
+            testPassed: Number,
+            totalTests: Number
         }
     ]
 

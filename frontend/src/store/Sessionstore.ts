@@ -28,7 +28,9 @@ export const useSessionstore = create<SessionState>((set) => ({
     createSession: async (difficulty) => {
         try {
             const response = await axiosInstance.post("/sessions/create", { difficulty });
-            socket.emit("join-session-room", response.data.sessionId);    
+            socket.emit("join-session-room", response.data.sessionId);
+            console.log("socket joined ",socket.id);
+                
             set({ sessionCode: response.data.inviteCode,
                 sessionId: response.data.sessionId,
                 status: response.data.status
@@ -45,6 +47,7 @@ export const useSessionstore = create<SessionState>((set) => ({
         try {
             const response = await axiosInstance.post("/sessions/join", { inviteCode: code });
             socket.emit("join-session-room", response.data.sessionId);
+            console.log("socket joined ",socket.id);
             set({
                 sessionCode: response.data.inviteCode,
                 sessionId: response.data.sessionId,
