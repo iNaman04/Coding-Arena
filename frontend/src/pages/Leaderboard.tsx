@@ -28,7 +28,7 @@ const LeaderboardPage: React.FC = () => {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
 
   useEffect(() => {
-   
+
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);
     const fetchLeaderboard = async () => {
@@ -45,10 +45,10 @@ const LeaderboardPage: React.FC = () => {
       }));
 
       uiPlayers.sort((a: any, b: any) => {
-          if (b.testsPassed !== a.testsPassed) return b.testsPassed - a.testsPassed;
-          return a.timeTaken - b.timeTaken;
-        });
-        
+        if (b.testsPassed !== a.testsPassed) return b.testsPassed - a.testsPassed;
+        return a.timeTaken - b.timeTaken;
+      });
+
       setLeaderboardData({
         sessionId: data.sessionId,
         problemTitle: "Two Sum",
@@ -59,10 +59,17 @@ const LeaderboardPage: React.FC = () => {
 
     }
     fetchLeaderboard();
-    
+
   }, [sessionId]);
 
 
+
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`; // Shows "26s"
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs.toString().padStart(2, '0')}s`; // Shows "1m 10s"
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -80,9 +87,9 @@ const LeaderboardPage: React.FC = () => {
       </div>
     );
   }
-  
-  
-  
+
+
+
   const sortedPlayers = leaderboardData.players;
 
 
@@ -179,8 +186,8 @@ const LeaderboardPage: React.FC = () => {
               <div
                 key={index}
                 className={`bg-white/5 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] ${isWinner
-                    ? 'border-yellow-500 shadow-lg shadow-yellow-500/20'
-                    : 'border-white/10'
+                  ? 'border-yellow-500 shadow-lg shadow-yellow-500/20'
+                  : 'border-white/10'
                   }`}
               >
                 <div className="p-6">
@@ -188,8 +195,8 @@ const LeaderboardPage: React.FC = () => {
                     <div className="flex items-center space-x-4">
                       {/* Rank Badge */}
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-slate-900' :
-                          rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-slate-900' :
-                            'bg-gradient-to-br from-orange-400 to-orange-600 text-slate-900'
+                        rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-slate-900' :
+                          'bg-gradient-to-br from-orange-400 to-orange-600 text-slate-900'
                         }`}>
                         {rank}
                       </div>
@@ -203,7 +210,7 @@ const LeaderboardPage: React.FC = () => {
                         <div className="flex items-center space-x-4 text-sm text-gray-400">
                           <span className="flex items-center space-x-1">
                             <Clock className="w-4 h-4" />
-                            <span>{player.timeTaken}</span>
+                            <span>{formatTime(player.timeTaken)}</span>
                           </span>
                           <span>•</span>
                           <span>{player.language}</span>
@@ -225,7 +232,7 @@ const LeaderboardPage: React.FC = () => {
                   <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="bg-slate-800/50 rounded-lg p-3 text-center">
                       <div className="text-xs text-gray-400 mb-1">Time Taken</div>
-                      <div className="text-lg font-bold text-purple-400">{player.timeTaken}</div>
+                      <div className="text-lg font-bold text-purple-400">{formatTime(player.timeTaken)}</div>
                     </div>
                     <div className="bg-slate-800/50 rounded-lg p-3 text-center">
                       <div className="text-xs text-gray-400 mb-1">Accuracy</div>
