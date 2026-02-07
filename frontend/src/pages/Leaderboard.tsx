@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Code, Trophy, Clock, CheckCircle, XCircle, Award, Star, Home, RotateCcw } from 'lucide-react';
-
+import axiosInstance from '../libs/axios.ts';
+import { useParams } from 'react-router';
 interface PlayerResult {
   username: string;
   avatar?: string;
@@ -22,53 +23,46 @@ interface LeaderboardData {
 
 const LeaderboardPage: React.FC = () => {
   const [showConfetti, setShowConfetti] = useState(false);
-  
-  // Mock data - this will come from your API based on sessionId
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardData>({
-    sessionId: 'ABC123',
-    problemTitle: 'Two Sum',
-    difficulty: 'Easy',
-    players: [
-      {
-        username: 'Player 1',
-        timeTaken: 245, // 4:05 minutes
-        testsPassed: 10,
-        totalTests: 10,
-        submissionTime: '2:15 PM',
-        code: 'function twoSum(nums, target) {...}',
-        language: 'JavaScript'
-      },
-      {
-        username: 'Player 2',
-        timeTaken: 312, // 5:12 minutes
-        testsPassed: 8,
-        totalTests: 10,
-        submissionTime: '2:17 PM',
-        code: 'def two_sum(nums, target): ...',
-        language: 'Python'
-      }
-    ],
-    winner: 'Player 1'
-  });
+  const { sessionId } = useParams();
+
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
 
   useEffect(() => {
-    // Show confetti animation on mount
+   
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);
+    const fetchLeaderboard = async () => {
+      const response = await axiosInstance.get(`/leaderboard/${sessionId}`);
+      const data = response.data;
 
-    // Fetch leaderboard data from API
-    // const fetchLeaderboard = async () => {
-    //   const response = await axiosInstance.get(`/battle/${sessionId}/results`);
-    //   setLeaderboardData(response.data);
-    // };
-    // fetchLeaderboard();
-  }, []);
+      const uiPlayers = data.players.map((p: any) => ({
+        username: `Player ${p.userId.slice(-4)}`,
+        timeTaken: p.timeTaken,
+        testsPassed: p.testsPassed,
+        totalTests: p.totalTests,
+        submissionTime: new Date(p.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        code: p.code,
+      }));
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+      uiPlayers.sort((a: any, b: any) => {
+          if (b.testsPassed !== a.testsPassed) return b.testsPassed - a.testsPassed;
+          return a.timeTaken - b.timeTaken;
+        });
+        
+      setLeaderboardData({
+        sessionId: data.sessionId,
+        problemTitle: "Two Sum",
+        difficulty: data.difficulty, // "easy"
+        players: uiPlayers,
+        winner: uiPlayers[0].testsPassed > 0 ? uiPlayers[0].username : undefined
+      });
+
+    }
+    fetchLeaderboard();
+    
+  }, [sessionId]);
+
+
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -79,12 +73,18 @@ const LeaderboardPage: React.FC = () => {
     }
   };
 
-  const sortedPlayers = [...leaderboardData.players].sort((a, b) => {
-    if (b.testsPassed !== a.testsPassed) {
-      return b.testsPassed - a.testsPassed;
-    }
-    return a.timeTaken - b.timeTaken;
-  });
+  if (!leaderboardData) {
+    return (
+      <div className="h-screen w-screen bg-slate-900 flex items-center justify-center text-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-purple-500"></div>
+      </div>
+    );
+  }
+  
+  
+  
+  const sortedPlayers = leaderboardData.players;
+
 
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
@@ -174,25 +174,23 @@ const LeaderboardPage: React.FC = () => {
           {sortedPlayers.map((player, index) => {
             const isWinner = index === 0 && player.testsPassed === player.totalTests;
             const rank = index + 1;
-            
+
             return (
               <div
                 key={index}
-                className={`bg-white/5 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] ${
-                  isWinner
+                className={`bg-white/5 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] ${isWinner
                     ? 'border-yellow-500 shadow-lg shadow-yellow-500/20'
                     : 'border-white/10'
-                }`}
+                  }`}
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-4">
                       {/* Rank Badge */}
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${
-                        rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-slate-900' :
-                        rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-slate-900' :
-                        'bg-gradient-to-br from-orange-400 to-orange-600 text-slate-900'
-                      }`}>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${rank === 1 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-slate-900' :
+                          rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-slate-900' :
+                            'bg-gradient-to-br from-orange-400 to-orange-600 text-slate-900'
+                        }`}>
                         {rank}
                       </div>
 
@@ -205,7 +203,7 @@ const LeaderboardPage: React.FC = () => {
                         <div className="flex items-center space-x-4 text-sm text-gray-400">
                           <span className="flex items-center space-x-1">
                             <Clock className="w-4 h-4" />
-                            <span>{formatTime(player.timeTaken)}</span>
+                            <span>{player.timeTaken}</span>
                           </span>
                           <span>•</span>
                           <span>{player.language}</span>
@@ -215,9 +213,8 @@ const LeaderboardPage: React.FC = () => {
 
                     {/* Test Results */}
                     <div className="text-right">
-                      <div className={`text-2xl font-bold mb-1 ${
-                        player.testsPassed === player.totalTests ? 'text-green-400' : 'text-yellow-400'
-                      }`}>
+                      <div className={`text-2xl font-bold mb-1 ${player.testsPassed === player.totalTests ? 'text-green-400' : 'text-yellow-400'
+                        }`}>
                         {player.testsPassed}/{player.totalTests}
                       </div>
                       <div className="text-xs text-gray-400">Tests Passed</div>
@@ -228,7 +225,7 @@ const LeaderboardPage: React.FC = () => {
                   <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="bg-slate-800/50 rounded-lg p-3 text-center">
                       <div className="text-xs text-gray-400 mb-1">Time Taken</div>
-                      <div className="text-lg font-bold text-purple-400">{formatTime(player.timeTaken)}</div>
+                      <div className="text-lg font-bold text-purple-400">{player.timeTaken}</div>
                     </div>
                     <div className="bg-slate-800/50 rounded-lg p-3 text-center">
                       <div className="text-xs text-gray-400 mb-1">Accuracy</div>
