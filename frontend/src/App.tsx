@@ -17,23 +17,47 @@ import Leaderboard from './pages/Leaderboard.tsx'
 
 function App() {
 
-  const { Authuser, checkAuth, isCheckingAuth } = useAuthStore();
+  const { Authuser, checkAuth, isCheckingAuth, logout } = useAuthStore();
   const { checkActiveSession } = useSessionstore();
   const navigate = useNavigate();
-  
-  
-  
+
+
+
   useEffect(() => {
     checkAuth();
   }, [])
 
-  
-
+ 
   useEffect(() => {
-    if (!socket.connected) {
-      socket.connect();
+  
+    if (!isCheckingAuth && Authuser?.id) {
+
+      if (!socket.connected) {
+        socket.connect();
+      }
+
+      const doSetup = () => {
+        console.log("Sending setup for user ID:", Authuser.id);
+        socket.emit("setup", Authuser.id);
+      };
+
+      if (socket.connected) doSetup();
+
+      socket.on("connect", doSetup);
+
+      socket.on("force_logout", (data) => {
+        alert(data.message);
+        logout();
+        navigate("/", { replace: true });
+      });
+
+      return () => {
+        socket.off("connect", doSetup);
+        socket.off("force_logout");
+      };
     }
-  }, []);
+  }, [Authuser, isCheckingAuth, logout, navigate]);
+
   useEffect(() => {
     const handleSessionStarted = ({ sessionId }: { sessionId: string }) => {
       navigate(`/battle/${sessionId}`);
@@ -46,21 +70,21 @@ function App() {
     };
   }, [navigate]);
 
-  useEffect(()=>{
-      const restoreSession = async()=>{
-        
-        if(isCheckingAuth || !Authuser) return ;
+  useEffect(() => {
+    const restoreSession = async () => {
 
-        const sessionId = await checkActiveSession();
-        if(sessionId){
-          socket.emit("join-session-room", sessionId);
-          //navigate(`/battle/${response.sessionId}`);
-          console.log("Session restored" , sessionId);
-          
-        }
+      if (isCheckingAuth || !Authuser) return;
+
+      const sessionId = await checkActiveSession();
+      if (sessionId) {
+        socket.emit("join-session-room", sessionId);
+        //navigate(`/battle/${response.sessionId}`);
+        console.log("Session restored", sessionId);
+
       }
-      restoreSession();
-  },[])
+    }
+    restoreSession();
+  }, [Authuser, isCheckingAuth, checkActiveSession])
 
   if (isCheckingAuth) {
     return (
