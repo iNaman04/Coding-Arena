@@ -47,7 +47,12 @@ const problems = [
             {
                 language: "javascript",
                 code: "function twoSum(nums, target) {\n    // Write your code here\n};"
+            },
+            {
+                language: "python",
+                code: "def twoSum(nums, target):\n    # Write code here\n    pass"
             }
+
         ],
         // Hidden code that runs on Piston
         wrappers: [
@@ -70,6 +75,30 @@ if (Array.isArray(result)) {
     console.log("null");
 }
         `
+            },
+            {
+                language: "python",
+                code: `
+import sys
+import json
+
+input_data = sys.stdin.read().splitlines()
+if len(input_data) < 2:
+    sys.exit(0)
+
+nums = json.loads(input_data[0])
+target = json.loads(input_data[1])
+
+# Ensure this name matches your starter code
+result = twoSum(nums, target)
+
+if isinstance(result, list):
+    result.sort()
+    # "separators=(',', ':')" removes the space after the comma
+    print(json.dumps(result, separators=(',', ':')))
+else:
+    print("null")
+`
             }
         ]
     },
