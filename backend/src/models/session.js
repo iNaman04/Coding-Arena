@@ -23,6 +23,7 @@ const sessionSchema = new mongoose.Schema({
     submissions: [
         {
             userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+            username: String,
             timeTaken: Number,
             isCorrect: Boolean,
             code: String,

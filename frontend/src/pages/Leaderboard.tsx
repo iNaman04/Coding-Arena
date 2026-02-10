@@ -35,8 +35,13 @@ const LeaderboardPage: React.FC = () => {
       const response = await axiosInstance.get(`/leaderboard/${sessionId}`);
       const data = response.data;
 
+      if(!data || !data.players) {
+        console.error("Invalid leaderboard data:", data);
+        return;
+      }
+
       const uiPlayers = data.players.map((p: any) => ({
-        username: `Player ${p.userId.slice(-4)}`,
+        username: p.username,
         timeTaken: p.timeTaken,
         testsPassed: p.testsPassed,
         totalTests: p.totalTests,
