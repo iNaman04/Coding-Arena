@@ -60,18 +60,7 @@ const CodingBattlePage: React.FC = () => {
 
 
 
-    useEffect(() => {
-        const checkSession = async () =>{
-            try {
-                const res = await axiosInstance.get(`/session/${sessionId}`);
-            } catch (error) {
-                
-            }
-        }
-    })
-    
-    
-    
+
     
     useEffect(() => {
 
