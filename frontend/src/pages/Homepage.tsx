@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { Code, Plus, Users, Zap, Trophy, Copy, Check, LogOut, User } from 'lucide-react';
 import { useAuthStore } from '../store/Authstore.ts';
 import { useSessionstore } from '../store/Sessionstore.ts';
@@ -9,7 +9,7 @@ const HomePage: React.FC = () => {
 
     const navigate = useNavigate();
     const { logout } = useAuthStore();
-    const { createSession, sessionCode, clearSession, joinSession, sessionId } = useSessionstore();
+    const { createSession, sessionCode, clearSession, joinSession, sessionId, checkActiveSession } = useSessionstore();
     const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
     const [joinCode, setJoinCode] = useState('');
     const [copied, setCopied] = useState(false);
@@ -20,6 +20,17 @@ const HomePage: React.FC = () => {
             socket.emit("join-session-room", sessionId);
         }
     }, [sessionId]);
+
+    useEffect(() => {
+        const checkSession =  async () =>{
+            const activeSessionId = await checkActiveSession();
+            if(activeSessionId){
+                navigate(`/battle/${activeSessionId}`, { replace: true });
+            }
+        }
+
+        checkSession();
+    }, [navigate, checkActiveSession]);
 
     const copyToClipboard = () => {
         if (!sessionCode) return;

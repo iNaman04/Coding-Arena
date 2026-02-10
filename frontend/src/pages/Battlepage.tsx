@@ -1,6 +1,6 @@
 import React, { useState, useEffect, use } from 'react';
 import { Code, Play, Send, Clock, User, Trophy, CheckCircle, XCircle, LoaderIcon } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../libs/axios.ts';
 import Editor from '@monaco-editor/react';
 import { useAuthStore } from '../store/Authstore.ts';
@@ -60,7 +60,19 @@ const CodingBattlePage: React.FC = () => {
 
 
 
-
+    useEffect(() => {
+        const checkSession = async () =>{
+            try {
+                const res = await axiosInstance.get(`/session/${sessionId}`);
+            } catch (error) {
+                
+            }
+        }
+    })
+    
+    
+    
+    
     useEffect(() => {
 
         if (isCheckingAuth || !Authuser) return;
@@ -68,6 +80,10 @@ const CodingBattlePage: React.FC = () => {
             try {
                 const response = await axiosInstance.post(`/battle/${sessionId}`, {}, { withCredentials: true });
                 setProblem(response.data.problem);
+
+                if(response.data.status === "COMPLETED"){
+                   navigate(`/leaderboard/${sessionId}`);
+                }
 
                 const startedAt = response.data.startedAt;
                 console.log(startedAt);

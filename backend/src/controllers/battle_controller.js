@@ -44,6 +44,7 @@ export const getBattleData = async (req, res) => {
         res.status(200).json({
             sessionId: session._id,
             startedAt: session.startTime,
+            status: session.status,
             problem: {
                 _id: session.problem._id,
                 title: session.problem.title,
