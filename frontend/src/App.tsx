@@ -96,7 +96,7 @@ function App() {
 
 
   return (
-    <div>
+    <div  className="w-full min-h-screen">
 
       <Routes>
         {/* Public routes (only for logged-out users) */}

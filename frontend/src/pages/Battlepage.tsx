@@ -246,7 +246,7 @@ const CodingBattlePage: React.FC = () => {
 
 
     return (
-        <div className="h-screen w-screen bg-slate-900 text-white flex flex-col overflow-hidden">
+        <div className="min-h-screen w-full bg-slate-900 text-white flex flex-col overflow-hidden">
             {/* Header */}
             <div className="bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center space-x-4">
