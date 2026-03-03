@@ -89,7 +89,7 @@ export const runCode = async (req, res) => {
         const publicTestCases = problem.testCases.slice(0, 2);
 
         for (let tc of publicTestCases) {
-            const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
+            const response = await axios.post("https://localhost:2000/api/v2/piston/execute", {
                 language: pistonLangMap[language] || language,
                 version: "*",
                 files: [
