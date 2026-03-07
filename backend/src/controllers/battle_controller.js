@@ -51,7 +51,7 @@ export const getBattleData = async (req, res) => {
                 description: session.problem.description,
                 difficulty: session.problem.difficulty,
                 examples: session.problem.examples,
-                testCases: session.problem.testCases.slice(0, 2),
+                testCases: session.problem.testCases,
                 constraints: session.problem.constraints,
                 starterCode: session.problem.starterCode,
                 wrappers: session.problem.wrappers,
@@ -89,33 +89,26 @@ export const runCode = async (req, res) => {
         const publicTestCases = problem.testCases.slice(0, 2);
 
         for (let tc of publicTestCases) {
-            const response = await axios.post("https://localhost:2000/api/v2/piston/execute", {
+            const response = await axios.post("http://localhost:2000/api/v2/execute", {
                 language: pistonLangMap[language] || language,
                 version: "*",
-                files: [
-                    {
-                        content: finalScript
-                    }
-                ],
+                files: [{ content: finalScript }],
                 stdin: tc.input
-            })
+            });
 
-            const run = response.data.run;
-            const actualOutput = run.stdout.trim();
-            const errorOutput = run.stderr.trim();
+            const { run, compile } = response.data;
 
-            console.log("actualOutput", actualOutput);
+            // --- DEFINE THE VARIABLES HERE ---
+            const errorOutput = (compile?.stderr || run.stderr || "").trim();
+            const actualOutput = (run.stdout || "").trim(); // Use fallback to empty string
 
-            console.log("errorOutput", errorOutput);
-
-
+            // Now you can safely use them below
             results.push({
                 input: tc.input,
                 output: tc.output,
                 actualOutput: errorOutput ? `Error: ${errorOutput}` : actualOutput,
-                passed: actualOutput === tc.output.trim() && !errorOutput
-            })
-
+                passed: !errorOutput && actualOutput.replace(/\s/g, "") === tc.output.trim().replace(/\s/g, "")
+            });
         }
 
 
@@ -137,7 +130,12 @@ export const submitCode = async (req, res) => {
         }
 
         const problem = session.problem;
-        const langWrapper = problem.wrappers.find(w => w.language === req.body.language);
+        
+        // Find language wrapper and add a safety check
+        const langWrapper = problem.wrappers.find(w => w.language === language);
+        if (!langWrapper) {
+            return res.status(400).json({ message: `Language wrapper for ${language} not found` });
+        }
 
         const finalScript = `${code}\n\n${langWrapper.code}`;
 
@@ -147,33 +145,49 @@ export const submitCode = async (req, res) => {
         };
 
         const testResults = [];
+
+        // Loop through ALL test cases for submission
         for (const tc of problem.testCases) {
             try {
-                const response = await axios.post("https://emkc.org/api/v2/piston/execute", {
+                const response = await axios.post("http://localhost:2000/api/v2/execute", {
                     language: pistonLangMap[language] || language,
                     version: "*",
                     files: [{ content: finalScript }],
                     stdin: tc.input
                 });
-                const actual = response.data.run.stdout.trim().replace(/\s+/g, '');
+
+                const { run, compile } = response.data;
+
+                // Capture any error (Compile or Runtime)
+                const errorOutput = (compile?.stderr || run?.stderr || "").trim();
+                
+                // Normalize outputs: Remove all whitespace for a fair comparison
+                const actual = (run?.stdout || "").trim().replace(/\s+/g, '');
                 const expected = tc.output.trim().replace(/\s+/g, '');
-                testResults.push(actual === expected && !response.data.run.stderr);
+
+                // Pass if NO error and cleaned strings match
+                const passed = !errorOutput && actual === expected;
+                testResults.push(passed);
+
             } catch (err) {
+                console.error("Piston Submission Error for Test Case:", err.message);
                 testResults.push(false);
             }
         }
 
         const allPassed = testResults.every(result => result === true);
+        const testsPassedCount = testResults.filter(result => result === true).length;
 
         const submissionData = {
             userId,
             timeTaken: timetaken,
             isCorrect: allPassed,
             code,
-            testPassed: testResults.filter(result => result === true).length,
+            testPassed: testsPassedCount,
             totalTests: problem.testCases.length
-        }
+        };
 
+        // Update or push submission
         const existingIndex = session.submissions.findIndex(s => s.userId.toString() === userId.toString());
         if (existingIndex > -1) {
             session.submissions[existingIndex] = submissionData;
@@ -181,24 +195,28 @@ export const submitCode = async (req, res) => {
             session.submissions.push(submissionData);
         }
 
+        // Check if battle is over
         if (session.submissions.length >= 2) {
             session.status = "COMPLETED";
-            await session.save(); // Save first!
+            await session.save();
             req.io.to(sessionId.toString()).emit("battle_finished", {
-                sessionId: sessionId.toString()
+                sessionId: sessionId.toString(),
+                winner: allPassed ? userId : "tie_or_other" // Simplified logic
             });
         } else {
-            await session.save(); // Still save the single submission
+            await session.save();
         }
 
         res.status(200).json({
             success: true,
             isCorrect: allPassed,
+            testsPassed: testsPassedCount,
+            totalTests: problem.testCases.length,
             isBattleOver: session.status === "COMPLETED"
         });
-    } catch (error) {
-        console.log("error submitting the code ", error);
 
+    } catch (error) {
+        console.error("Final Submission Error:", error);
         res.status(500).json({ message: "Submission failed", error: error.message });
     }
-}
+};
