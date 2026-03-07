@@ -15,17 +15,21 @@ const HomePage: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
-    // useEffect(() => {
-    //     if (sessionId) {
-    //         socket.emit("join-session-room", sessionId);
-    //     }
-    // }, [sessionId]);
+    useEffect(() => {
+        if (sessionId) {
+            socket.emit("join-session-room", sessionId);
+        }
+    }, [sessionId]);
 
     useEffect(() => {
         const checkSession =  async () =>{
             const activeSessionId = await checkActiveSession();
             if(activeSessionId){
-                navigate(`/battle/${activeSessionId}`, { replace: true });
+                const sessionStatus = useSessionstore.getState().status;
+                if(sessionStatus === "ACTIVE"){
+                    navigate(`/battle/${activeSessionId}`, { replace: true });
+                }
+                
             }
         }
 
