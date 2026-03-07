@@ -15,11 +15,11 @@ const HomePage: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
-    useEffect(() => {
-        if (sessionId) {
-            socket.emit("join-session-room", sessionId);
-        }
-    }, [sessionId]);
+    // useEffect(() => {
+    //     if (sessionId) {
+    //         socket.emit("join-session-room", sessionId);
+    //     }
+    // }, [sessionId]);
 
     useEffect(() => {
         const checkSession =  async () =>{

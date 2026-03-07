@@ -110,8 +110,8 @@ export const getMyActiveSession = async (req, res) =>{
     try {
         const userId = req.user._id;
         const session = await Session.findOne({
-            players: userId,
-            status: "ACTIVE"
+           players: { $in: [userId] }, 
+            status: { $in: ["WAITING", "ACTIVE"] }
         })
         if(!session){
             return res.status(404).json({ message: "No active session found" });
