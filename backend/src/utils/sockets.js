@@ -19,6 +19,11 @@ export const initSocket = (server) => {
             console.log(`Socket ${socket.id} joined room ${sessionId}`);
         });
 
+        socket.on("leave-session-room", (sessionId) => {
+            socket.leave(sessionId);
+            console.log(`Socket ${socket.id} left room ${sessionId}`);
+        })
+
         socket.on("setup", async (userId) => {
             try {
 
