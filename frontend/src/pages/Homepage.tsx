@@ -108,15 +108,15 @@ const HomePage: React.FC = () => {
                 <div className="grid grid-cols-3 gap-4 mb-12">
                     <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4 text-center">
                         <div className="text-2xl font-bold text-purple-400">12</div>
-                        <div className="text-sm text-gray-400">Battles Won</div>
+                        <div className="text-sm text-gray-400">Battles Played</div>
                     </div>
                     <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4 text-center">
                         <div className="text-2xl font-bold text-pink-400">8</div>
-                        <div className="text-sm text-gray-400">Current Streak</div>
+                        <div className="text-sm text-gray-400">Battles Won</div>
                     </div>
                     <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4 text-center">
                         <div className="text-2xl font-bold text-blue-400">#127</div>
-                        <div className="text-sm text-gray-400">Global Rank</div>
+                        <div className="text-sm text-gray-400">Total Exp</div>
                     </div>
                 </div>
 
