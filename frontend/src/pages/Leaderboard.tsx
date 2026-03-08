@@ -59,7 +59,7 @@ const LeaderboardPage: React.FC = () => {
 
       setLeaderboardData({
         sessionId: data.sessionId,
-        problemTitle: "Two Sum",
+        problemTitle: data.title,
         difficulty: data.difficulty, // "easy"
         players: uiPlayers,
         winner: uiPlayers[0].testsPassed > 0 ? uiPlayers[0].username : undefined
