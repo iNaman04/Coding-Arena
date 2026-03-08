@@ -3,6 +3,7 @@ import { Code, Zap, Trophy, Users, Clock, TrendingUp } from 'lucide-react';
 import SignupPage from './Signuppage.tsx';
 import { Navigate, useNavigate } from 'react-router';
 
+
 const LandingPage: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
@@ -90,7 +91,7 @@ const LandingPage: React.FC = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <button className="group bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4 rounded-lg font-bold text-lg hover:shadow-2xl hover:shadow-purple-500/50 transition transform hover:scale-105">
+            <button  onClick={() => navigate('/signup')} className="group bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4 rounded-lg font-bold text-lg hover:shadow-2xl hover:shadow-purple-500/50 transition transform hover:scale-105">
               Start Battle
               <Zap className="inline-block ml-2 w-5 h-5 group-hover:animate-bounce" />
             </button>
@@ -174,7 +175,7 @@ const LandingPage: React.FC = () => {
         <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-lg border border-white/10 rounded-2xl p-12">
           <h2 className="text-4xl font-bold mb-4">Ready to Start Battling?</h2>
           <p className="text-gray-300 text-lg mb-8">Join thousands of developers competing daily</p>
-          <button className="bg-gradient-to-r from-purple-500 to-pink-500 px-10 py-4 rounded-lg font-bold text-lg hover:shadow-2xl hover:shadow-purple-500/50 transition transform hover:scale-105">
+          <button  onClick={() => navigate('/signup')} className="bg-gradient-to-r from-purple-500 to-pink-500 px-10 py-4 rounded-lg font-bold text-lg hover:shadow-2xl hover:shadow-purple-500/50 transition transform hover:scale-105">
             Launch Your First Battle
           </button>
         </div>
