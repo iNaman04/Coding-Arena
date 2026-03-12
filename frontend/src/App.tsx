@@ -14,6 +14,7 @@ import Battlepage from './pages/Battlepage.tsx'
 import { useSessionstore } from './store/Sessionstore.ts'
 import { Loader } from 'lucide-react'
 import Leaderboard from './pages/Leaderboard.tsx'
+import ProfilePage from './pages/Profilepage.tsx'
 
 function App() {
 
@@ -104,6 +105,7 @@ function App() {
         <Route path="/login" element={!Authuser ? <LoginPage /> : <Navigate to="/home" />} />
         <Route path="/signup" element={!Authuser ? <SignupPage /> : <Navigate to="/home" />} />
 
+        <Route path="/profile" element={Authuser ? <ProfilePage /> : <Navigate to="/" />} />
         <Route path="/home" element={Authuser ? <HomePage /> : <Navigate to="/" />} />
         <Route path="/battle/:sessionId" element={Authuser ? <Battlepage /> : <Navigate to="/" />} />
         <Route path="/leaderboard/:sessionId" element={Authuser ? <Leaderboard /> : <Navigate to="/" />} />
