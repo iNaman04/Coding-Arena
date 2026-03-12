@@ -263,84 +263,54 @@ const ProfilePage: React.FC = () => {
           <div className="grid md:grid-cols-2 gap-6">
             {/* Battle Statistics */}
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-              <h2 className="text-xl font-bold mb-4 flex items-center space-x-2">
+              <h2 className="text-xl font-bold mb-6 flex items-center space-x-2">
                 <Trophy className="w-5 h-5 text-purple-400" />
                 <span>Battle Statistics</span>
               </h2>
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Total Battles</span>
-                  <span className="font-bold text-lg">{userProfile.stats.totalBattles}</span>
+                <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-lg">
+                  <span className="text-gray-400 text-lg">Total Battles</span>
+                  <span className="font-bold text-2xl">{userProfile.stats.totalBattles}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Wins</span>
-                  <span className="font-bold text-lg text-green-400">{userProfile.stats.wins}</span>
+                <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-lg">
+                  <span className="text-gray-400 text-lg">Wins</span>
+                  <span className="font-bold text-2xl text-green-400">{userProfile.stats.wins}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Losses</span>
-                  <span className="font-bold text-lg text-red-400">{userProfile.stats.losses}</span>
+                <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-lg">
+                  <span className="text-gray-400 text-lg">Losses</span>
+                  <span className="font-bold text-2xl text-red-400">{userProfile.stats.losses}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Win Rate</span>
-                  <span className="font-bold text-lg text-purple-400">{userProfile.stats.winRate}%</span>
-                </div>
-                <div className="h-px bg-white/10 my-4"></div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Current Streak</span>
-                  <span className="font-bold text-lg text-yellow-400">{userProfile.stats.currentStreak} 🔥</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Longest Streak</span>
-                  <span className="font-bold text-lg">{userProfile.stats.longestStreak}</span>
+                <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-lg">
+                  <span className="text-gray-400 text-lg">Win Rate</span>
+                  <span className="font-bold text-2xl text-purple-400">{userProfile.stats.winRate}%</span>
                 </div>
               </div>
             </div>
 
-            {/* Problems Solved */}
+            {/* Streaks & Performance */}
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-              <h2 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <Target className="w-5 h-5 text-pink-400" />
-                <span>Problems Solved</span>
+              <h2 className="text-xl font-bold mb-6 flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-pink-400" />
+                <span>Streaks & Performance</span>
               </h2>
               <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-400">Total</span>
-                    <span className="font-bold text-lg">{userProfile.stats.totalProblems}</span>
-                  </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" style={{ width: '78%' }}></div>
-                  </div>
+                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-lg">
+                  <span className="text-gray-400 text-lg">Current Streak</span>
+                  <span className="font-bold text-2xl text-yellow-400">{userProfile.stats.currentStreak} 🔥</span>
                 </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-green-400">Easy</span>
-                    <span className="font-bold text-green-400">{userProfile.stats.easyProblems}</span>
-                  </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '64%' }}></div>
-                  </div>
+                <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-lg">
+                  <span className="text-gray-400 text-lg">Longest Streak</span>
+                  <span className="font-bold text-2xl">{userProfile.stats.longestStreak}</span>
                 </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-yellow-400">Medium</span>
-                    <span className="font-bold text-yellow-400">{userProfile.stats.mediumProblems}</span>
-                  </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '50%' }}></div>
-                  </div>
+                <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
+                  <span className="text-gray-400 text-lg">Global Rank</span>
+                  <span className={`font-bold text-2xl ${getRankColor(userProfile.stats.globalRank)}`}>
+                    #{userProfile.stats.globalRank}
+                  </span>
                 </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-red-400">Hard</span>
-                    <span className="font-bold text-red-400">{userProfile.stats.hardProblems}</span>
-                  </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div className="bg-red-500 h-2 rounded-full" style={{ width: '32%' }}></div>
-                  </div>
+                <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-lg">
+                  <span className="text-gray-400 text-lg">Rating</span>
+                  <span className="font-bold text-2xl text-pink-400">{userProfile.stats.rating}</span>
                 </div>
               </div>
             </div>
