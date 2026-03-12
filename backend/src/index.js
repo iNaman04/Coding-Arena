@@ -10,6 +10,7 @@ import http from 'http';
 import { initSocket } from './utils/sockets.js';
 import battleRoutes from './routes/battle_route.js';
 import leaderboardRoutes from './routes/leaderboard_route.js';
+import userRoutes from './routes/user_route.js';
 
 dotenv.config({ path: "../.env" });  // it is for handling .env file 
 
@@ -39,7 +40,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/battle', battleRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
-
+app.use("/api/user", userRoutes);
 
 connectDB().then(() => {
   console.log("Database connected successfully");

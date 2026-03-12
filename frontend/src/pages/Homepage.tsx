@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/Authstore.ts';
 import { useSessionstore } from '../store/Sessionstore.ts';
 import { useNavigate } from 'react-router';
 import { socket } from '../libs/sockets.ts';
+import axiosInstance from '../libs/axios.ts';
 
 const HomePage: React.FC = () => {
 
@@ -15,6 +16,30 @@ const HomePage: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
+    const [userStats, setUserStats] = useState({
+        wins: 0,
+        totalBattles: 0,
+        exp: 0
+    });
+
+
+    useEffect(() => {
+        const fetchUserStats = async () => {
+            try {
+                // Replace with your actual user endpoint
+                const response = await axiosInstance.get('/user/UserInfo');
+                const { wins, totalBattles, exp } = response.data;
+                setUserStats({ wins, totalBattles, exp });
+            } catch (error) {
+                console.error("Failed to fetch stats", error);
+            }
+        };
+
+        fetchUserStats();
+    }, [])
+
+
+
     useEffect(() => {
         if (sessionId) {
             socket.emit("join-session-room", sessionId);
@@ -22,14 +47,14 @@ const HomePage: React.FC = () => {
     }, [sessionId]);
 
     useEffect(() => {
-        const checkSession =  async () =>{
+        const checkSession = async () => {
             const activeSessionId = await checkActiveSession();
-            if(activeSessionId){
+            if (activeSessionId) {
                 const sessionStatus = useSessionstore.getState().status;
-                if(sessionStatus === "ACTIVE"){
+                if (sessionStatus === "ACTIVE") {
                     navigate(`/battle/${activeSessionId}`, { replace: true });
                 }
-                
+
             }
         }
 
@@ -107,15 +132,15 @@ const HomePage: React.FC = () => {
                 {/* Quick Stats */}
                 <div className="grid grid-cols-3 gap-4 mb-12">
                     <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4 text-center">
-                        <div className="text-2xl font-bold text-purple-400">12</div>
+                        <div className="text-2xl font-bold text-purple-400">{userStats.totalBattles}</div>
                         <div className="text-sm text-gray-400">Battles Played</div>
                     </div>
                     <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4 text-center">
-                        <div className="text-2xl font-bold text-pink-400">8</div>
+                        <div className="text-2xl font-bold text-pink-400">{userStats.wins}</div>
                         <div className="text-sm text-gray-400">Battles Won</div>
                     </div>
                     <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4 text-center">
-                        <div className="text-2xl font-bold text-blue-400">#127</div>
+                        <div className="text-2xl font-bold text-blue-400">{userStats.exp}</div>
                         <div className="text-sm text-gray-400">Total Exp</div>
                     </div>
                 </div>

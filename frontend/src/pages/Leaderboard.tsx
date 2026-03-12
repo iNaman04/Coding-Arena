@@ -3,7 +3,7 @@ import { Code, Trophy, Clock, CheckCircle, XCircle, Award, Star, Home, RotateCcw
 import axiosInstance from '../libs/axios.ts';
 import { useParams } from 'react-router';
 import { socket } from '../libs/sockets.ts';
-import { useNavigate,  } from 'react-router';
+import { useNavigate, } from 'react-router';
 interface PlayerResult {
   username: string;
   avatar?: string;
@@ -38,18 +38,21 @@ const LeaderboardPage: React.FC = () => {
       const response = await axiosInstance.get(`/leaderboard/${sessionId}`);
       const data = response.data;
 
-      if(!data || !data.players) {
+      if (!data || !data.players) {
         console.error("Invalid leaderboard data:", data);
         return;
       }
 
-      const uiPlayers = data.players.map((p: any) => ({
-        username: p.username,
-        timeTaken: p.timeTaken,
-        testsPassed: p.testsPassed,
-        totalTests: p.totalTests,
-        submissionTime: new Date(p.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        code: p.code,
+      const uiPlayers = data.submissions.map((s: any) => ({
+        username: s.userId.username,
+        timeTaken: s.timeTaken,
+        testsPassed: s.testPassed,
+        totalTests: s.totalTests,
+        submissionTime: new Date(s.submittedAt).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        code: s.code,
       }));
 
       uiPlayers.sort((a: any, b: any) => {
@@ -58,9 +61,9 @@ const LeaderboardPage: React.FC = () => {
       });
 
       setLeaderboardData({
-        sessionId: data.sessionId,
-        problemTitle: data.title,
-        difficulty: data.difficulty, // "easy"
+        sessionId: data._id,
+        problemTitle: "Two Sum", // You can later pull this from a populated problem field
+        difficulty: data.difficulty.charAt(0).toUpperCase() + data.difficulty.slice(1),
         players: uiPlayers,
         winner: uiPlayers[0].testsPassed > 0 ? uiPlayers[0].username : undefined
       });
@@ -70,15 +73,15 @@ const LeaderboardPage: React.FC = () => {
 
   }, [sessionId]);
 
-  const HomeHandle = () =>{
-  
+  const HomeHandle = () => {
+
     console.log(sessionId);
-  
-    if(socket && sessionId){
-        socket.emit("leave-session-room", sessionId);
-        console.log("socket left room");
-        
-        navigate('/home');
+
+    if (socket && sessionId) {
+      socket.emit("leave-session-room", sessionId);
+      console.log("socket left room");
+
+      navigate('/home');
     }
   }
 
@@ -286,7 +289,7 @@ const LeaderboardPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="mt-12 flex items-center justify-center space-x-4">
-         
+
           <button onClick={HomeHandle} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-8 py-3 rounded-lg font-bold transition flex items-center space-x-2">
             <Home className="w-5 h-5" />
             <span>Back to Home</span>

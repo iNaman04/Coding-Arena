@@ -31,7 +31,8 @@ const sessionSchema = new mongoose.Schema({
             testPassed: Number,
             totalTests: Number
         }
-    ]
+    ],
+    isProcessed: { type: Boolean, default: false },
 
 }, { timestamps: true });
 

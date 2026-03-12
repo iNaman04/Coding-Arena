@@ -1,50 +1,56 @@
 import express from 'express';
 import Session from '../models/session.js';
 import Problem from '../models/problems.js';
+import User from '../models/user_model.js';
 
 export const getLeaderBoardData = async (req, res) => {
     try {
-        const session = await Session.findById(req.params.sessionId).populate("problem").populate("players", "username");
-        if (!session) {
-            return res.status(404).json({ message: "Session not found" });
+        // 1. Populate both the players AND the submissions if they are separate
+        // Based on your log, the data lives in 'submissions'
+        const session = await Session.findById(req.params.sessionId).populate('submissions.userId');
+
+        if (!session) return res.status(404).send("Session not found");
+
+        if (!session.isProcessed) {
+            // Use 'submissions' array as it contains the testPassed and timeTaken data
+            const sortedSubmissions = [...session.submissions].sort((a, b) => {
+                if (b.testPassed !== a.testPassed) return b.testPassed - a.testPassed;
+                return a.timeTaken - b.timeTaken;
+            });
+
+            const winner = sortedSubmissions[0];
+            
+            // Get all participant IDs from the submissions array
+            const allParticipantIds = session.submissions.map(s => s.userId._id);
+
+            if (winner && winner.testPassed > 0) {
+                // Update Winner
+                await User.findByIdAndUpdate(winner.userId._id, {
+                    $inc: { wins: 1, totalBattles: 1, exp: 100 }
+                });
+                session.winnerId = winner.userId._id;
+
+                // Update Losers (Everyone except the winner)
+                const losers = allParticipantIds.filter(id => 
+                    id.toString() !== winner.userId._id.toString()
+                );
+
+                if (losers.length > 0) {
+                    await User.updateMany(
+                        { _id: { $in: losers } }, 
+                        { $inc: { totalBattles: 1, exp: 20 } }
+                    );
+                }
+            }
+
+            session.isProcessed = true;
+            await session.save();
         }
 
-        const userMap = {};
-        
-        session.players.forEach(player => {
-            userMap[player._id.toString()] = player.username;
-        });
-
-        const results = session.submissions.map(sub => {
-            const userIdStr = sub.userId.toString();
-            return {
-                userId: userIdStr,
-                username: userMap[userIdStr] || `User ${userIdStr.slice(-4)}`,
-                timeTaken: sub.timeTaken,
-                testsPassed: sub.testPassed,
-                totalTests: sub.totalTests,
-                isCorrect: sub.isCorrect, // true or false
-                submittedAt: sub.submittedAt,
-                code: sub.code
-            }
-        });
-
-        results.sort((a, b) => {
-            if (b.testsPassed !== a.testsPassed) {
-                return b.testsPassed - a.testsPassed;
-            }
-            return a.timeTaken - b.timeTaken;
-        })
-
-        res.status(200).json({
-            problemId: session.problem,
-            difficulty: session.difficulty,
-            players: results,
-            winnerId: results[0].testsPassed > 0 ? results[0].userId : null
-        });
-
+        res.json(session);
 
     } catch (error) {
-        res.status(500).json({ message: "Failed to fetch leaderboard data", error: error.message });
+        console.error("Error fetching leaderboard data:", error);
+        return res.status(500).send("Internal Server Error");
     }
-}
+};
