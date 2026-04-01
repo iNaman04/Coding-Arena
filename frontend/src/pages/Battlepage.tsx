@@ -41,12 +41,9 @@ const CodingBattlePage: React.FC = () => {
     const [Problem, setProblem] = useState<Question | null>(null);
 
 
-    const [language, setLanguage] = useState('javascript');
+    const [language, setLanguage] = useState("javascript");
     const [Output, setOutput] = useState('');
-    const [code, setCode] = useState(`function solution(nums, target) {
-    // Write your code here
-    
-}`);
+    const [code, setCode] = useState<string>("// Loading starter code...");
     const [activeTab, setActiveTab] = useState<'description' | 'submissions'>('description');
     const [testResults, setTestResults] = useState<TestCase[]>([]);
     const [isRunning, setIsRunning] = useState(false);
@@ -61,7 +58,7 @@ const CodingBattlePage: React.FC = () => {
 
 
 
-    
+
     useEffect(() => {
 
         if (isCheckingAuth || !Authuser) return;
@@ -70,8 +67,8 @@ const CodingBattlePage: React.FC = () => {
                 const response = await axiosInstance.post(`/battle/${sessionId}`, {}, { withCredentials: true });
                 setProblem(response.data.problem);
 
-                if(response.data.status === "COMPLETED"){
-                   navigate(`/leaderboard/${sessionId}`);
+                if (response.data.status === "COMPLETED") {
+                    navigate(`/leaderboard/${sessionId}`);
                 }
 
                 const startedAt = response.data.startedAt;
@@ -100,48 +97,48 @@ const CodingBattlePage: React.FC = () => {
         fetchBattleData();
     }, [sessionId, isCheckingAuth, Authuser]);
 
-  useEffect(() => {
-    // Only run the timer if data is loaded and we aren't in a "waiting" or "finished" state
-    if (!isDataLoaded || !Problem?.startedAt || isBattleOver || isWaiting) return;
-
-    const startTime = new Date(Problem.startedAt).getTime();
-
-    const timer = setInterval(() => {
-        const now = new Date().getTime();
-        // Calculate total seconds passed since the battle began
-        const diffInSeconds = Math.floor((now - startTime) / 1000);
-        
-        setElapsedTime(diffInSeconds > 0 ? diffInSeconds : 0);
-    }, 1000);
-
-    return () => clearInterval(timer);
-}, [isDataLoaded, Problem?.startedAt, isBattleOver, isWaiting]);
     useEffect(() => {
-    if (sessionId && socket && isDataLoaded) {
-        // Use ONE consistent event name that matches your backend
-        // Make sure your backend uses the same string!
-        socket.emit("join-session-room",  sessionId );
-        
-        console.log("Joined socket room:", sessionId);
+        // Only run the timer if data is loaded and we aren't in a "waiting" or "finished" state
+        if (!isDataLoaded || !Problem?.startedAt || isBattleOver || isWaiting) return;
 
-        // Define the handler
-        const handleBattleFinished = () => {
-            console.log("Battle finished event received!");
-            setIsBattleOver(true);
-            setTimeout(() => {
-                navigate(`/leaderboard/${sessionId}`);
-            }, 2000);
-        };
+        const startTime = new Date(Problem.startedAt).getTime();
 
-        // Listen for the event
-        socket.on("battle_finished", handleBattleFinished);
+        const timer = setInterval(() => {
+            const now = new Date().getTime();
+            // Calculate total seconds passed since the battle began
+            const diffInSeconds = Math.floor((now - startTime) / 1000);
 
-        // Cleanup
-        return () => {
-            socket.off("battle_finished", handleBattleFinished);
-        };
-    }
-}, [sessionId, socket, isDataLoaded, navigate]);
+            setElapsedTime(diffInSeconds > 0 ? diffInSeconds : 0);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isDataLoaded, Problem?.startedAt, isBattleOver, isWaiting]);
+    useEffect(() => {
+        if (sessionId && socket && isDataLoaded) {
+            // Use ONE consistent event name that matches your backend
+            // Make sure your backend uses the same string!
+            socket.emit("join-session-room", sessionId);
+
+            console.log("Joined socket room:", sessionId);
+
+            // Define the handler
+            const handleBattleFinished = () => {
+                console.log("Battle finished event received!");
+                setIsBattleOver(true);
+                setTimeout(() => {
+                    navigate(`/leaderboard/${sessionId}`);
+                }, 2000);
+            };
+
+            // Listen for the event
+            socket.on("battle_finished", handleBattleFinished);
+
+            // Cleanup
+            return () => {
+                socket.off("battle_finished", handleBattleFinished);
+            };
+        }
+    }, [sessionId, socket, isDataLoaded, navigate]);
 
 
     if (isCheckingAuth || !Problem) {
@@ -163,11 +160,14 @@ const CodingBattlePage: React.FC = () => {
         try {
             setIsRunning(true);
             console.log("Sending ID:", Problem._id)
+            console.log("req to backend", code, language);
             const response = await axiosInstance.post("battle/run-code", {
                 code,
                 problemId: Problem._id,
                 language: language
             }, { withCredentials: true });
+
+
 
             setTestResults(response.data.results);
         } catch (error) {
@@ -376,8 +376,14 @@ const CodingBattlePage: React.FC = () => {
                                 value={language}
                                 onChange={(e) => {
                                     const lang = e.target.value;
+                                    console.log("selected language is", lang);
+
                                     setLanguage(lang);
-                                    const starter = Problem?.starterCode.find((s: StarterCode) => s.language === lang);
+                                    const starter = Problem?.starterCode.find(
+                                        (s: StarterCode) => s.language.toLowerCase() === lang.toLowerCase()
+                                    );
+                                    console.log(starter);
+
                                     if (starter) {
                                         setCode(starter.code);
                                     }

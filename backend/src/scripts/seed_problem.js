@@ -106,34 +106,84 @@ else:
         title: "Add Two Numbers",
         slug: "add-two-numbers",
         difficulty: "EASY",
-        description: "Return the sum of two integers a and b.",
+        description: "Given two integers a and b, return their sum.",
         constraints: ["-10^9 <= a, b <= 10^9"],
         examples: [
             {
                 input: "a = 2, b = 3",
-                output: "5"
+                output: "5",
+                explanation: "The sum of 2 and 3 is 5."
             }
         ],
+        // The actual raw data passed to the wrapper via stdin
         testCases: [
+            // 1. Basic Sample Cases (Visible)
             { input: "2\n3", output: "5" },
-            { input: "10\n20", output: "30" }
+            { input: "10\n20", output: "30" },
+
+            // 2. Negative Numbers (Hidden)
+            { input: "-1\n-5", output: "-6" },
+            { input: "10\n-2", output: "8" },
+
+            // 3. Large Integers (Hidden)
+            { input: "1000000\n2000000", output: "3000000" },
+
+            // 4. Zeroes (Hidden)
+            { input: "0\n0", output: "0" },
+            { input: "0\n-99", output: "-99" }
         ],
+        // What the user sees in the editor
         starterCode: [
             {
                 language: "javascript",
                 code: "function addTwoNumbers(a, b) {\n    // Write your code here\n};"
+            },
+            {
+                language: "python",
+                code: "def addTwoNumbers(a, b):\n    # Write code here\n    pass"
             }
         ],
+        // Hidden code that runs on Piston
         wrappers: [
             {
                 language: "javascript",
                 code: `
 const fs = require('fs');
+// Read from stdin, split by newline, and parse as integers
 const input = fs.readFileSync(0, 'utf8').trim().split('\\n');
-const a = parseInt(input[0]);
-const b = parseInt(input[1]);
-console.log(addTwoNumbers(a, b));
+if (input.length < 2) process.exit(0);
+
+const a = parseInt(input[0], 10);
+const b = parseInt(input[1], 10);
+
+const result = addTwoNumbers(a, b);
+
+// Print the result as a string
+console.log(result.toString());
         `
+            },
+            {
+                language: "python",
+                code: `
+import sys
+
+input_data = sys.stdin.read().splitlines()
+if len(input_data) < 2:
+    sys.exit(0)
+
+# Parse inputs as integers
+try:
+    a = int(input_data[0].strip())
+    b = int(input_data[1].strip())
+except:
+    sys.exit(1)
+
+# Ensure this name matches your starter code
+result = addTwoNumbers(a, b)
+
+# Print result to stdout
+print(result)
+`
             }
         ]
     }

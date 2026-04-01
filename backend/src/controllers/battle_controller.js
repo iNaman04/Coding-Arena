@@ -69,40 +69,37 @@ export const getBattleData = async (req, res) => {
 export const runCode = async (req, res) => {
     try {
         const { code, problemId, language } = req.body;
-
         const problem = await Problem.findById(problemId);
-        if (!problem) {
-            return res.status(404).json({ message: "Problem not found" });
-        }
+        if (!problem) return res.status(404).json({ message: "Problem not found" });
 
         const langWrapper = problem.wrappers.find(w => w.language === language);
-
         const finalScript = `${code}\n\n${langWrapper.code}`;
 
-        const results = [];
-
-        const pistonLangMap = {
-            javascript: "javascript",
-            python: "python",
+        // Define the map correctly based on your runtimes
+        const pistonConfig = {
+            javascript: { language: "javascript", version: "18.15.0" }, 
+            python: { language: "python", version: "3.12.0" },
         };
 
+        // Get the config or fallback
+        const selectedConfig = pistonConfig[language] || { language: language, version: "*" };
+
+        const results = [];
         const publicTestCases = problem.testCases.slice(0, 2);
 
         for (let tc of publicTestCases) {
             const response = await axios.post("http://localhost:2000/api/v2/execute", {
-                language: pistonLangMap[language] || language,
-                version: "*",
+                // FIX: Pass the string property, not the whole object
+                language: selectedConfig.language, 
+                version: selectedConfig.version,
                 files: [{ content: finalScript }],
                 stdin: tc.input
             });
 
             const { run, compile } = response.data;
-
-            // --- DEFINE THE VARIABLES HERE ---
             const errorOutput = (compile?.stderr || run.stderr || "").trim();
-            const actualOutput = (run.stdout || "").trim(); // Use fallback to empty string
+            const actualOutput = (run.stdout || "").trim();
 
-            // Now you can safely use them below
             results.push({
                 input: tc.input,
                 output: tc.output,
@@ -110,8 +107,6 @@ export const runCode = async (req, res) => {
                 passed: !errorOutput && actualOutput.replace(/\s/g, "") === tc.output.trim().replace(/\s/g, "")
             });
         }
-
-
         res.status(200).json({ success: true, results });
     } catch (error) {
         console.error("Piston API Error:", error.response?.data || error.message);
