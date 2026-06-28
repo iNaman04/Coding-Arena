@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
   currentSocketId : { type: String, default: null },
   wins: { type: Number, default: 0 },
   totalBattles: { type: Number, default: 0 },
-  exp: { type: Number, default: 0 }
+  exp: { type: Number, default: 0 },
+  bio: { type: String, default: "" }
 
 }, { timestamps: true });
 
