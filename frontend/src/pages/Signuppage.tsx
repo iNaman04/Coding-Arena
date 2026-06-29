@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Code, Mail, Lock, User, Eye, EyeOff, Github, Chrome } from 'lucide-react';
 import { useAuthStore } from '../store/Authstore.ts';
+import { getOAuthUrl } from '../libs/auth.ts';
 
 const SignupPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -53,9 +54,8 @@ const SignupPage: React.FC = () => {
     }
   };
 
-  const handleSocialSignup = (provider: string) => {
-    console.log(`Signing up with ${provider}`);
-    // Handle social signup logic here
+  const handleSocialSignup = (provider: 'google' | 'github') => {
+    window.location.href = getOAuthUrl(provider);
   };
 
   return (
@@ -117,14 +117,14 @@ const SignupPage: React.FC = () => {
           {/* Social Signup */}
           <div className="space-y-3 mb-6">
             <button
-              onClick={() => handleSocialSignup('Google')}
+              onClick={() => handleSocialSignup('google')}
               className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg py-3 flex items-center justify-center space-x-3 transition group"
             >
               <Chrome className="w-5 h-5 group-hover:scale-110 transition" />
               <span>Continue with Google</span>
             </button>
             <button
-              onClick={() => handleSocialSignup('GitHub')}
+              onClick={() => handleSocialSignup('github')}
               className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg py-3 flex items-center justify-center space-x-3 transition group"
             >
               <Github className="w-5 h-5 group-hover:scale-110 transition" />

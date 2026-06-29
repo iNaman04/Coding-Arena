@@ -23,13 +23,18 @@ export const signup = async (req, res) => {
 
         const hashedPasword = await bcrypt.hash(password, 10);
 
-        const newUser = new User({ username, email, password: hashedPasword });
+        const newUser = new User({
+            username,
+            email,
+            password: hashedPasword,
+            authProvider: "local",
+        });
         await newUser.save();
         const token = generateToken(newUser._id);
         res.cookie("token", token, {
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            sameSite: "strict",
+            sameSite: "lax",
             secure: false
         });
         return res.status(200).json({ id: newUser._id, username: newUser.username });
@@ -50,6 +55,12 @@ export const login = async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        if (!user.password) {
+            return res.status(400).json({
+                message: `This account uses ${user.authProvider} sign-in. Please continue with ${user.authProvider}.`,
+            });
         }
 
         if (user.currentSocketId) {
@@ -73,7 +84,7 @@ export const login = async (req, res) => {
         res.cookie("token", token, {
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            sameSite: "strict",
+            sameSite: "lax",
             secure: false
         });
         return res.status(200).json({ id: user._id, username: user.username });
@@ -84,7 +95,12 @@ export const login = async (req, res) => {
 
 export const checkAuth = async (req, res) => {
     try {
-        res.status(200).json(req.user);
+        res.status(200).json({
+            id: req.user._id,
+            username: req.user.username,
+            email: req.user.email,
+            authProvider: req.user.authProvider,
+        });
     } catch (error) {
         return res.status(500).json({ message: "checkAuth failed" });
     }
@@ -93,8 +109,8 @@ export const checkAuth = async (req, res) => {
 export const logout = async (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,
-        sameSite: "strict",
-        secure: true,
+        sameSite: "lax",
+        secure: false,
     });
     res.status(200).json({ message: "Logged out successfully" });
 }
