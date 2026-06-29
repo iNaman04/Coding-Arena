@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Code, Trophy, Target, TrendingUp, Calendar, Award, Edit, LogOut, Home, Clock, Zap, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Code, Trophy, TrendingUp, Calendar, Edit, LogOut, Home, Clock, Loader } from 'lucide-react';
+import axiosInstance from '../libs/axios.ts';
+import { useAuthStore } from '../store/Authstore.ts';
+import toast from 'react-hot-toast';
 
 interface UserStats {
   totalBattles: number;
@@ -9,11 +13,7 @@ interface UserStats {
   currentStreak: number;
   longestStreak: number;
   totalProblems: number;
-  easyProblems: number;
-  mediumProblems: number;
-  hardProblems: number;
-  globalRank: number;
-  rating: number;
+  exp: number;
 }
 
 interface RecentBattle {
@@ -29,85 +29,103 @@ interface RecentBattle {
 interface UserProfile {
   username: string;
   email: string;
-  avatar?: string;
   joinDate: string;
   bio?: string;
   stats: UserStats;
   recentBattles: RecentBattle[];
 }
 
-const ProfilePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'battles' | 'achievements'>('overview');
-  const [isEditing, setIsEditing] = useState(false);
+const emptyProfile: UserProfile = {
+  username: '',
+  email: '',
+  joinDate: '',
+  bio: '',
+  stats: {
+    totalBattles: 0,
+    wins: 0,
+    losses: 0,
+    winRate: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    totalProblems: 0,
+    exp: 0,
+  },
+  recentBattles: [],
+};
 
-  // Mock user data - this will come from your API
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    username: 'CodeWarrior',
-    email: 'warrior@codebattle.com',
-    joinDate: 'January 2024',
-    bio: 'Passionate coder who loves challenges and competitive programming.',
-    stats: {
-      totalBattles: 45,
-      wins: 28,
-      losses: 17,
-      winRate: 62.2,
-      currentStreak: 5,
-      longestStreak: 12,
-      totalProblems: 78,
-      easyProblems: 32,
-      mediumProblems: 30,
-      hardProblems: 16,
-      globalRank: 127,
-      rating: 1842
-    },
-    recentBattles: [
-      {
-        id: '1',
-        problemTitle: 'Two Sum',
-        difficulty: 'Easy',
-        opponent: 'PlayerX',
-        result: 'win',
-        timeTaken: '4:32',
-        date: '2 hours ago'
-      },
-      {
-        id: '2',
-        problemTitle: 'Longest Substring',
-        difficulty: 'Medium',
-        opponent: 'CodeMaster',
-        result: 'win',
-        timeTaken: '8:45',
-        date: '1 day ago'
-      },
-      {
-        id: '3',
-        problemTitle: 'Merge K Lists',
-        difficulty: 'Hard',
-        opponent: 'ProCoder99',
-        result: 'loss',
-        timeTaken: '15:20',
-        date: '2 days ago'
-      },
-      {
-        id: '4',
-        problemTitle: 'Valid Parentheses',
-        difficulty: 'Easy',
-        opponent: 'NewbieDev',
-        result: 'win',
-        timeTaken: '3:15',
-        date: '3 days ago'
-      }
-    ]
-  });
+const formatRelativeTime = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const diffMs = Date.now() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+  return date.toLocaleDateString();
+};
+
+const ProfilePage: React.FC = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuthStore();
+  const [activeTab, setActiveTab] = useState<'overview' | 'battles'>('overview');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editBio, setEditBio] = useState('');
+  const [userProfile, setUserProfile] = useState<UserProfile>(emptyProfile);
+
+  const fetchProfile = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.get('/user/profile');
+      const data = response.data;
+      setUserProfile({
+        ...data,
+        recentBattles: data.recentBattles.map((battle: RecentBattle & { date: string }) => ({
+          ...battle,
+          date: formatRelativeTime(battle.date),
+        })),
+      });
+      setEditBio(data.bio || '');
+    } catch (error) {
+      console.error('Failed to fetch profile', error);
+      toast.error('Failed to load profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Fetch user profile from API
-    // const fetchProfile = async () => {
-    //   const response = await axiosInstance.get('/user/profile');
-    //   setUserProfile(response.data);
-    // };
-    // fetchProfile();
+    fetchProfile();
   }, []);
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsSaving(true);
+      const response = await axiosInstance.put('/user/profile', { bio: editBio });
+      setUserProfile((prev) => ({ ...prev, bio: response.data.bio }));
+      setIsEditing(false);
+      toast.success('Profile updated');
+    } catch (error) {
+      console.error('Failed to update profile', error);
+      toast.error('Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditBio(userProfile.bio || '');
+    setIsEditing(false);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -118,12 +136,13 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const getRankColor = (rank: number) => {
-    if (rank <= 10) return 'text-yellow-400';
-    if (rank <= 100) return 'text-purple-400';
-    if (rank <= 1000) return 'text-blue-400';
-    return 'text-gray-400';
-  };
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <Loader className="w-10 h-10 animate-spin text-purple-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden">
@@ -144,15 +163,24 @@ const ProfilePage: React.FC = () => {
           </span>
         </div>
         <div className="flex items-center space-x-4">
-          <button className="flex items-center space-x-2 text-gray-300 hover:text-white transition">
+          <button
+            onClick={() => navigate('/home')}
+            className="flex items-center space-x-2 text-gray-300 hover:text-white transition"
+          >
             <Home className="w-5 h-5" />
             <span className="hidden sm:inline">Home</span>
           </button>
-          <button className="flex items-center space-x-2 text-gray-300 hover:text-white transition">
+          <button
+            onClick={() => navigate('/home')}
+            className="flex items-center space-x-2 text-gray-300 hover:text-white transition"
+          >
             <Trophy className="w-5 h-5" />
             <span className="hidden sm:inline">Leaderboard</span>
           </button>
-          <button className="text-gray-400 hover:text-white transition">
+          <button
+            onClick={handleLogout}
+            className="text-gray-400 hover:text-white transition"
+          >
             <LogOut className="w-5 h-5" />
           </button>
         </div>
@@ -166,7 +194,7 @@ const ProfilePage: React.FC = () => {
             <div className="flex items-center space-x-6">
               {/* Avatar */}
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-4xl font-bold">
-                {userProfile.username.charAt(0)}
+                {userProfile.username.charAt(0).toUpperCase()}
               </div>
 
               {/* User Info */}
@@ -183,33 +211,53 @@ const ProfilePage: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => isEditing ? handleCancelEdit() : setIsEditing(true)}
               className="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-lg transition flex items-center space-x-2"
             >
               <Edit className="w-4 h-4" />
-              <span>Edit Profile</span>
+              <span>{isEditing ? 'Cancel' : 'Edit Profile'}</span>
             </button>
           </div>
 
           {/* Bio */}
-          {userProfile.bio && (
+          {isEditing ? (
+            <div className="bg-slate-800/50 rounded-lg p-4 mb-6">
+              <textarea
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                placeholder="Write a short bio..."
+                maxLength={200}
+                rows={3}
+                className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-gray-300 focus:outline-none focus:border-purple-500 resize-none"
+              />
+              <div className="flex justify-end mt-3">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Bio'}
+                </button>
+              </div>
+            </div>
+          ) : userProfile.bio ? (
             <div className="bg-slate-800/50 rounded-lg p-4 mb-6">
               <p className="text-gray-300">{userProfile.bio}</p>
             </div>
-          )}
+          ) : null}
 
           {/* Key Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/50 rounded-xl p-4 text-center">
-              <div className={`text-3xl font-bold mb-1 ${getRankColor(userProfile.stats.globalRank)}`}>
-                #{userProfile.stats.globalRank}
+              <div className="text-3xl font-bold text-purple-400 mb-1">
+                {userProfile.stats.totalBattles}
               </div>
-              <div className="text-sm text-gray-400">Global Rank</div>
+              <div className="text-sm text-gray-400">Total Battles</div>
             </div>
 
             <div className="bg-gradient-to-br from-pink-500/20 to-pink-600/20 border border-pink-500/50 rounded-xl p-4 text-center">
-              <div className="text-3xl font-bold text-pink-400 mb-1">{userProfile.stats.rating}</div>
-              <div className="text-sm text-gray-400">Rating</div>
+              <div className="text-3xl font-bold text-pink-400 mb-1">{userProfile.stats.exp}</div>
+              <div className="text-sm text-gray-400">Total EXP</div>
             </div>
 
             <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/50 rounded-xl p-4 text-center">
@@ -245,16 +293,6 @@ const ProfilePage: React.FC = () => {
             }`}
           >
             Recent Battles
-          </button>
-          <button
-            onClick={() => setActiveTab('achievements')}
-            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${
-              activeTab === 'achievements'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Achievements
           </button>
         </div>
 
@@ -303,14 +341,14 @@ const ProfilePage: React.FC = () => {
                   <span className="font-bold text-2xl">{userProfile.stats.longestStreak}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
-                  <span className="text-gray-400 text-lg">Global Rank</span>
-                  <span className={`font-bold text-2xl ${getRankColor(userProfile.stats.globalRank)}`}>
-                    #{userProfile.stats.globalRank}
+                  <span className="text-gray-400 text-lg">Problems Solved</span>
+                  <span className="font-bold text-2xl text-purple-400">
+                    {userProfile.stats.totalProblems}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-lg">
-                  <span className="text-gray-400 text-lg">Rating</span>
-                  <span className="font-bold text-2xl text-pink-400">{userProfile.stats.rating}</span>
+                  <span className="text-gray-400 text-lg">Total EXP</span>
+                  <span className="font-bold text-2xl text-pink-400">{userProfile.stats.exp}</span>
                 </div>
               </div>
             </div>
@@ -320,68 +358,52 @@ const ProfilePage: React.FC = () => {
         {activeTab === 'battles' && (
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
             <h2 className="text-xl font-bold mb-6">Recent Battles</h2>
-            <div className="space-y-4">
-              {userProfile.recentBattles.map((battle) => (
-                <div
-                  key={battle.id}
-                  className="bg-slate-800/50 border border-white/10 rounded-xl p-4 hover:bg-slate-800/70 transition"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-bold">{battle.problemTitle}</h3>
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${getDifficultyColor(battle.difficulty)}`}>
-                          {battle.difficulty}
-                        </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          battle.result === 'win' 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : 'bg-red-500/20 text-red-400'
-                        }`}>
-                          {battle.result.toUpperCase()}
-                        </span>
+            {userProfile.recentBattles.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <Trophy className="w-12 h-12 mx-auto mb-4 opacity-40" />
+                <p>No battles yet. Start a session from the home page!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {userProfile.recentBattles.map((battle) => (
+                  <div
+                    key={battle.id}
+                    className="bg-slate-800/50 border border-white/10 rounded-xl p-4 hover:bg-slate-800/70 transition"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="font-bold">{battle.problemTitle}</h3>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${getDifficultyColor(battle.difficulty)}`}>
+                            {battle.difficulty}
+                          </span>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            battle.result === 'win'
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-red-500/20 text-red-400'
+                          }`}>
+                            {battle.result.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-4 text-sm text-gray-400">
+                          <span>vs {battle.opponent}</span>
+                          <span>•</span>
+                          <span className="flex items-center space-x-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{battle.timeTaken}</span>
+                          </span>
+                          <span>•</span>
+                          <span>{battle.date}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-400">
-                        <span>vs {battle.opponent}</span>
-                        <span>•</span>
-                        <span className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{battle.timeTaken}</span>
-                        </span>
-                        <span>•</span>
-                        <span>{battle.date}</span>
-                      </div>
+                      {battle.result === 'win' && (
+                        <Trophy className="w-6 h-6 text-yellow-400" />
+                      )}
                     </div>
-                    {battle.result === 'win' && (
-                      <Trophy className="w-6 h-6 text-yellow-400" />
-                    )}
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'achievements' && (
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-            <h2 className="text-xl font-bold mb-6">Achievements</h2>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border border-yellow-500/50 rounded-xl p-6 text-center">
-                <Award className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
-                <h3 className="font-bold mb-1">First Victory</h3>
-                <p className="text-sm text-gray-400">Won your first battle</p>
+                ))}
               </div>
-              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/50 rounded-xl p-6 text-center">
-                <Zap className="w-12 h-12 text-purple-400 mx-auto mb-3" />
-                <h3 className="font-bold mb-1">Speed Demon</h3>
-                <p className="text-sm text-gray-400">Solved in under 3 minutes</p>
-              </div>
-              <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/50 rounded-xl p-6 text-center">
-                <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
-                <h3 className="font-bold mb-1">Perfect Score</h3>
-                <p className="text-sm text-gray-400">All tests passed</p>
-              </div>
-            </div>
+            )}
           </div>
         )}
       </div>
