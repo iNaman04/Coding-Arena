@@ -1,8 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: "../.env" });
+
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import connectDB from './db.js';
-import dotenv from 'dotenv';
+import passport from './config/passport.js';
 import authRoutes from './routes/auth_route.js';
 import cookieParser from 'cookie-parser';
 import sessionRoutes from './routes/session_route.js';
@@ -11,8 +14,6 @@ import { initSocket } from './utils/sockets.js';
 import battleRoutes from './routes/battle_route.js';
 import leaderboardRoutes from './routes/leaderboard_route.js';
 import userRoutes from './routes/user_route.js';
-
-dotenv.config({ path: "../.env" });  // it is for handling .env file 
 
 const app = express();
 const server = http.createServer(app);
@@ -29,7 +30,8 @@ app.use(cors({
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser()); 
+app.use(cookieParser());
+app.use(passport.initialize());
 
 app.use((req, res, next) => {
   req.io = app.get("io");

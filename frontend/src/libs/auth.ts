@@ -1,0 +1,4 @@
+export const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || "http://localhost:3000";
+
+export const getOAuthUrl = (provider: "google" | "github") =>
+  `${API_ORIGIN}/api/auth/${provider}`;

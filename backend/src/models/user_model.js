@@ -4,7 +4,9 @@ import express from "express";
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: { type: String, default: null },
+  authProvider: { type: String, enum: ["local", "google", "github"], default: "local" },
+  providerId: { type: String, default: null },
   currentSocketId : { type: String, default: null },
   wins: { type: Number, default: 0 },
   totalBattles: { type: Number, default: 0 },

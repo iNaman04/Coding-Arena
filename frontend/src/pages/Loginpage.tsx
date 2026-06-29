@@ -1,12 +1,14 @@
-    import React, { useState } from 'react';
+    import React, { useState, useEffect } from 'react';
+    import { useSearchParams } from 'react-router-dom';
     import { Code, Mail, Lock, Eye, EyeOff, Github, Chrome } from 'lucide-react';
     import { useAuthStore } from '../store/Authstore.ts';
+    import { getOAuthUrl } from '../libs/auth.ts';
+    import toast from 'react-hot-toast';
 
     const LoginPage: React.FC = () => {
     
     const { login } = useAuthStore();
-    
-    
+    const [searchParams, setSearchParams] = useSearchParams();
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
@@ -14,6 +16,21 @@
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [rememberMe, setRememberMe] = useState(false);
+
+    useEffect(() => {
+        const error = searchParams.get('error');
+        if (!error) return;
+
+        const messages: Record<string, string> = {
+            google_auth_failed: 'Google sign-in was cancelled or failed.',
+            github_auth_failed: 'GitHub sign-in was cancelled or failed.',
+            oauth_failed: 'Social sign-in failed. Please try again.',
+            oauth_not_configured: 'Social sign-in is not configured yet. Use email and password.',
+        };
+
+        toast.error(messages[error] || 'Sign-in failed. Please try again.');
+        setSearchParams({}, { replace: true });
+    }, [searchParams, setSearchParams]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -47,9 +64,8 @@
         }
     };
 
-    const handleSocialLogin = (provider: string) => {
-        console.log(`Logging in with ${provider}`);
-        // Handle social login logic here
+    const handleSocialLogin = (provider: 'google' | 'github') => {
+        window.location.href = getOAuthUrl(provider);
     };
 
     return (
@@ -111,14 +127,14 @@
             {/* Social Login */}
             <div className="space-y-3 mb-6">
                 <button
-                onClick={() => handleSocialLogin('Google')}
+                onClick={() => handleSocialLogin('google')}
                 className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg py-3 flex items-center justify-center space-x-3 transition group"
                 >
                 <Chrome className="w-5 h-5 group-hover:scale-110 transition" />
                 <span>Continue with Google</span>
                 </button>
                 <button
-                onClick={() => handleSocialLogin('GitHub')}
+                onClick={() => handleSocialLogin('github')}
                 className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg py-3 flex items-center justify-center space-x-3 transition group"
                 >
                 <Github className="w-5 h-5 group-hover:scale-110 transition" />
